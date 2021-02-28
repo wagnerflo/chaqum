@@ -1,25 +1,8 @@
-import functools
-import inspect
+import os
 import re
 
-def ignore(excs):
-    def decorator(func):
-        if inspect.iscoroutinefunction(func):
-            @functools.wraps(func)
-            async def wrapper(*args, **kws):
-                try:
-                    return await func(*args, **kws)
-                except excs:
-                    pass
-        else:
-            @functools.wraps(func)
-            def wrapper(*args, **kws):
-                try:
-                    return func(*args, **kws)
-                except excs:
-                    pass
-        return wrapper
-    return decorator
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 def optstring(optstr):
     def decorator(func):
@@ -39,14 +22,66 @@ _RE_INTERVAL = re.compile(
 )
 
 def parse_interval(interval):
-    result = {}
+    kws = {}
     while interval:
         match = _RE_INTERVAL.match(interval)
         if match is None:
-            return
-        result.update(
+            raise Exception('Invalid interval specifier.')
+        kws.update(
             (k,int(v)) for k,v in match.groupdict().items()
             if v is not None
         )
         interval = interval[match.end():]
-    return result
+    return IntervalTrigger(**kws)
+
+def parse_cron(cron):
+    parts = cron.split()
+    kws = dict()
+
+    if len(parts) == 6:
+        kws.update(
+            second = parts.pop(0)
+        )
+
+    if len(parts) == 5:
+        kws.update(
+            minute      = parts[0],
+            hour        = parts[1],
+            day         = parts[2],
+            month       = parts[3],
+            day_of_week = parts[4],
+        )
+        return CronTrigger(**kws)
+
+    raise Exception('Invalid cron specifier.')
+
+def opt_to_value(opts, opt, conv):
+    try:
+        return conv(opts[opt])
+    except KeyError:
+        return None
+    except ValueError:
+        raise Exception(
+            f"Expected '{conv.__name__}' for option '{opt}'."
+        )
+
+def opts_to_keywords(opts, **kws):
+    return {
+        name: val
+        for name,(opt,conv) in kws.items()
+        if (val := opt_to_value(opts, opt, conv)) is not None
+    }
+
+def check_script(base, script):
+    path = base / script
+
+    if not path.exists():
+        raise Exception(f"Job '{script}' does not exist.")
+
+    if not path.is_file():
+        raise Exception(f"Job '{script}' is not a file.")
+
+    if not os.access(path, os.X_OK):
+        raise Exception(f"Job '{init}' is not executable.")
+
+    return path

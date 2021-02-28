@@ -3,11 +3,14 @@ def main():
     import logging
 
     from argparse import ArgumentParser
-    from os import access,X_OK
+    from noblklog import (
+        AsyncStreamHandler,
+        AsyncSysLogHandler,
+    )
     from pathlib import Path
     from sys import stderr
 
-    from .logging import Bla
+    from .util import check_script
     from .manager import Manager
 
     parser = ArgumentParser()
@@ -29,23 +32,21 @@ def main():
         err(f"Path '{args.directory}' is no directory.")
         return 1
 
-    init = args.directory / 'init'
+    try:
+        check_script(args.directory, 'init')
 
-    if not init.exists():
-        err(f"Path '{args.directory}' contains no 'init' job.")
-        return 1
-
-    if not access(init, X_OK):
-        err(f"Job file '{init}' is not executable.")
+    except Exception as exc:
+        err(exc)
         return 1
 
     # configure logging
     root = logging.getLogger(None)
     root.setLevel(logging.INFO)
-    root.addHandler(Bla())
+    #root.addHandler(AsyncSysLogHandler())
+    root.addHandler(AsyncStreamHandler())
 
     try:
         mgr = Manager(args.directory)
         asyncio.run(mgr.run())
     except KeyboardInterrupt:
-        print()
+        print(file=stderr)
