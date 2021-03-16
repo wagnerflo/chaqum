@@ -28,6 +28,9 @@ loglevel_map = {
     'D': logging.DEBUG,
 }
 
+class UnknownCommand(Exception):
+    pass
+
 class Manager:
     def __init__(self, path):
         self._path = path
@@ -69,10 +72,14 @@ class Manager:
             EVENT_JOB_REMOVED | EVENT_ALL_JOBS_REMOVED
         )
 
+        log.info('Job manager starting.')
+
         # start the scheduler, wait for the init job and then until done
         self._sched.start()
         await self.register_job('init', ident='init', args=init_args)
         await self._done
+
+        log.debug('Job manager shutting down.')
 
         # cleanup
         self._sched.shutdown(wait=False)
@@ -81,6 +88,8 @@ class Manager:
         self._loop = None
         self._done = None
         self._pid = None
+
+        log.debug('Job manager stopped.')
 
     def register_job(self, script, args=[], ident=None, group=None, max_jobs=0):
         path = check_script(self._path, script)
@@ -103,6 +112,8 @@ class Manager:
             ident, self._loop.create_future(), path, args
         )
 
+        log.debug(f"Registering job '{' '.join((script,) + args)}'.")
+
         # create task
         self._loop.create_task(self._run_job(job, grp))
 
@@ -115,7 +126,7 @@ class Manager:
         try:
             # wait for free slot
             job.set_waiting()
-            await grp.slot_free()
+            await grp.slot_free(job)
             job.set_running()
 
             # prepare command pipes
@@ -125,6 +136,8 @@ class Manager:
             def preexec_fn():
                 os.dup2(child_wr_fd, 3)
                 os.dup2(child_rd_fd, 4)
+
+            job.log.info('Starting job.')
 
             # spawn child
             proc = await asyncio.create_subprocess_exec(
@@ -155,15 +168,21 @@ class Manager:
             )
 
             # start task to handle task logging output
-            log = self._loop.create_task(self._handle_logging(proc.stdout))
+            log = self._loop.create_task(
+                self._handle_logging(job, proc.stdout)
+            )
 
             # start task to handle commands
-            cmd = self._loop.create_task(self._handle_commands(rd, wr))
+            cmd = self._loop.create_task(
+                self._handle_commands(job, rd, wr)
+            )
 
             # wait for process and tasks to exit
             await proc.wait()
             await log
             await cmd
+
+            job.log.info('Job completed.')
 
         except asyncio.CancelledError:
             if proc is not None:
@@ -180,7 +199,7 @@ class Manager:
         # check if the manager is done running
         self._check_done()
 
-    async def _handle_logging(self, rd):
+    async def _handle_logging(self, job, rd):
         try:
             while line := await rd.readline():
                 line = line.decode().rstrip()
@@ -191,20 +210,26 @@ class Manager:
                 else:
                     lvl = logging.INFO
 
-                log.log(lvl, line)
+                job.log.log(lvl, line)
 
         except asyncio.CancelledError:
             pass
 
-    async def _handle_commands(self, rd, wr):
+    async def _handle_commands(self, job, rd, wr):
         try:
             while line := await rd.readline():
+                line = line.strip()
+                reply = 'E'
+
                 try:
-                    func,opts,args = self._parse_command(line.decode())
+                    cmd,func,opts,args = self._parse_command(line.decode())
                     reply = await func(self, opts, *args)
 
+                except UnknownCommand:
+                    job.log.error(f"Unknown command '{line.decode()}'")
+
                 except Exception as exc:
-                    reply = f'E {exc}'
+                    job.log.error(f"{cmd}: {str(exc)}")
 
                 wr.write(reply.encode() + b'\n')
                 await wr.drain()
@@ -221,7 +246,7 @@ class Manager:
             trigger = parse_cron(cron)
 
         else:
-            return 'E Missing repetition specifier (-i/-c).'
+            raise Exception('Missing repetition specifier (-i/-c).')
 
         self._sched.add_job(
             self.register_job, kwargs=dict(
@@ -275,5 +300,5 @@ class Manager:
         cmd,*args = shlex.split(cmd)
         if func := self._COMMANDS.get(cmd, None):
             opts,args = getopt(args, func.optstring)
-            return func,dict(opts),args
-        raise Exception('Unknown command.')
+            return cmd,func,dict(opts),args
+        raise UnknownCommand()
