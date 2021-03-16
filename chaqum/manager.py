@@ -92,7 +92,7 @@ class Manager:
         log.debug('Job manager stopped.')
 
     def register_job(self, script, args=[], ident=None, group=None, max_jobs=0):
-        path = check_script(self._path, script)
+        check_script(self._path, script)
 
         if ident is None:
             ident = f'{script}/{next(self._pid)}'
@@ -109,7 +109,7 @@ class Manager:
 
         # create job object and register
         job = self._jobs[ident] = grp[ident] = Job(
-            ident, self._loop.create_future(), path, args
+            ident, self._loop.create_future(), script, args
         )
 
         log.debug(f"Registering job '{' '.join((script,) + args)}'.")
@@ -141,12 +141,13 @@ class Manager:
 
             # spawn child
             proc = await asyncio.create_subprocess_exec(
-                job.path, *job.args,
+                f"./{job.script}", *job.args,
                 stdin=asyncio.subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
                 pass_fds={ 3, 4 },
                 preexec_fn=preexec_fn,
+                cwd=self._path,
             )
 
             # close child pipe ends
