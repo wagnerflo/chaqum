@@ -19,6 +19,14 @@ from .util import (
 
 log = logging.getLogger('chaqum')
 
+loglevel_map = {
+    'F': logging.CRITICAL,
+    'C': logging.CRITICAL,
+    'E': logging.ERROR,
+    'W': logging.WARNING,
+    'D': logging.DEBUG,
+}
+
 class Manager:
     def __init__(self, path):
         self._path = path
@@ -171,7 +179,15 @@ class Manager:
     async def _handle_logging(self, rd):
         try:
             while line := await rd.readline():
-                log.info(line.decode().rstrip())
+                line = line.decode().rstrip()
+
+                if len(line) > 1 and line[1] == '\x1f':
+                    lvl = loglevel_map.get(line[0], logging.INFO)
+                    line = line[2:]
+                else:
+                    lvl = logging.INFO
+
+                log.log(lvl, line)
 
         except asyncio.CancelledError:
             pass
