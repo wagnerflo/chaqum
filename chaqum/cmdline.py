@@ -13,7 +13,8 @@ def main():
     from .util import check_script
     from .manager import Manager
 
-    parser = ArgumentParser()
+    prog = 'chaqum'
+    parser = ArgumentParser(prog=prog)
     parser.add_argument(
         'directory',
         type=Path,
@@ -32,18 +33,18 @@ def main():
         print(*args, file=stderr, flush=True)
 
     if not args.directory.exists():
-        err(f"Path '{args.directory}' does not exist.")
+        err(f"{prog}: Path '{args.directory}' does not exist.")
         return 1
 
     if not args.directory.is_dir():
-        err(f"Path '{args.directory}' is no directory.")
+        err(f"{prog}: Path '{args.directory}' is no directory.")
         return 1
 
     try:
         check_script(args.directory, 'init')
 
     except Exception as exc:
-        err(exc)
+        err(f"{prog}: {exc}")
         return 1
 
     # configure logging
