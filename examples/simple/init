@@ -1,0 +1,25 @@
+#!/bin/sh
+echo START INIT
+
+echo 'repeat -c "*/5 * * * * *" -- scan' >&3
+read line <&4
+echo $line
+
+echo enqueue -g test -m 3 -- wait >&3
+read line <&4
+echo $line
+echo enqueue -g test -m 3 -- wait >&3
+read line <&4
+echo $line
+echo enqueue -g test -m 3 -- wait >&3
+read line <&4
+echo $line
+echo enqueue -g test -m 3 -- wait >&3
+read status ident <&4
+echo $status $ident
+
+echo wait -t 5 -- $ident >&3
+read status <&4
+echo $status
+
+echo END INIT
