@@ -18,6 +18,13 @@ def main():
         'directory',
         type=Path,
     )
+    parser.add_argument(
+        'arguments',
+        nargs='*',
+        help=(
+            "Arguments passed on to the 'init' job."
+        )
+    )
 
     args = parser.parse_args()
 
@@ -47,6 +54,6 @@ def main():
 
     try:
         mgr = Manager(args.directory)
-        asyncio.run(mgr.run())
+        asyncio.run(mgr.run(*args.arguments))
     except KeyboardInterrupt:
         print(file=stderr)

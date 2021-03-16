@@ -42,7 +42,7 @@ class Manager:
                 self._done.set_result(True)
             return True
 
-    async def run(self):
+    async def run(self, *init_args):
         if self._done is not None:
             raise Exception(f'{self} already running')
 
@@ -60,7 +60,7 @@ class Manager:
 
         # start the scheduler, wait for the init job and then until done
         self._sched.start()
-        await self.register_job('init', ident='init')
+        await self.register_job('init', ident='init', args=init_args)
         await self._done
 
         # cleanup
