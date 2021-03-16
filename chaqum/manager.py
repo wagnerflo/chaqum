@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import os
 import logging
 import shlex
@@ -35,6 +36,7 @@ class Manager:
         self._sched = None
         self._loop = None
         self._done = None
+        self._pid = None
 
     @property
     def is_done(self):
@@ -59,6 +61,7 @@ class Manager:
         self._sched = AsyncIOScheduler()
         self._loop = asyncio.get_running_loop()
         self._done = self._loop.create_future()
+        self._pid = itertools.count(1)
 
         # add listener to get notified of relevant scheduler changes
         self._sched.add_listener(
@@ -77,12 +80,13 @@ class Manager:
         self._sched = None
         self._loop = None
         self._done = None
+        self._pid = None
 
     def register_job(self, script, args=[], ident=None, group=None, max_jobs=0):
         path = check_script(self._path, script)
 
         if ident is None:
-            ident = f'{script}/{id(path)}'
+            ident = f'{script}/{next(self._pid)}'
 
         # create group
         grp = self._groups.get(group)
