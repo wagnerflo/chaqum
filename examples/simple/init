@@ -1,25 +1,13 @@
 #!/bin/sh
-echo START INIT
 
-echo 'repeat -c "*/5 * * * * *" -- scan' >&3
-read line <&4
-echo $line
+. ../../shell/chaqum
 
-echo enqueue -g test -m 3 -- wait >&3
-read line <&4
-echo $line
-echo enqueue -g test -m 3 -- wait >&3
-read line <&4
-echo $line
-echo enqueue -g test -m 3 -- wait >&3
-read line <&4
-echo $line
-echo enqueue -g test -m 3 -- wait >&3
-read status ident <&4
-echo $status $ident
+repeat -c "*/5 * * * * *" -- scan
 
-echo wait -t 5 -- $ident >&3
-read status <&4
-echo $status
+jobid=$(enqueue -g test -m 3 -- wait)
+jobid=$(enqueue -g test -m 3 -- wait)
+jobid=$(enqueue -g test -m 3 -- wait)
+jobid=$(enqueue -g test -m 3 -- wait)
 
-echo END INIT
+waitjobs -t 5 -- $jobid >/dev/null
+

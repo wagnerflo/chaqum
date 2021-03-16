@@ -1,4 +1,2 @@
 #!/bin/sh
-echo START WAIT
 sleep 10
-echo END WAIT
