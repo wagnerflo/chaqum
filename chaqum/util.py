@@ -18,7 +18,7 @@ _RE_INTERVAL = re.compile(
         (?P<seconds>\d+)s |
         (?P<minutes>\d+)m |
         (?P<hours>\d+)h   |
-        (?P<days>\d+)s    |
+        (?P<days>\d+)d    |
         (?P<weeks>\d+)w
     ''', re.X
 )
