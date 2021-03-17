@@ -30,8 +30,8 @@ def main():
     parser.add_argument(
         'directory',
         help=(
-            "Path to the job tree. Minimally required to a directory "
-            "containing a executable file called 'init'."
+            "Path to the job tree. Needs to be a directory containing "
+            "at least a executable file called 'init'."
         )
     )
     parser.add_argument(
