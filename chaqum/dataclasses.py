@@ -1,7 +1,6 @@
 from asyncio import sleep as async_sleep,Future
 from dataclasses import dataclass,field
 from enum import Enum
-from itertools import count
 from logging import getLogger,LoggerAdapter
 from psutil import cpu_percent
 from typing import List
@@ -50,11 +49,8 @@ class Group(dict):
     max_jobs: int = field(default=0)
     max_load: float = field(default=0.0)
 
-    async def slot_free(self, job):
-        for i in count():
-            if not self.is_full:
-                break
-
+    async def slot_free(self):
+        while self.is_full:
             await async_sleep(0.5)
 
     @property

@@ -140,7 +140,7 @@ class Manager:
             job.set_waiting()
             if grp.is_full:
                 job.log.info('Waiting for slot.')
-            await grp.slot_free(job)
+            await grp.slot_free()
             job.set_running()
 
             # prepare command pipes
