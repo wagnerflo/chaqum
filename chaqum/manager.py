@@ -20,7 +20,7 @@ from .util import (
     path_is_executable,
 )
 
-log = logging.getLogger('chaqum')
+log = logging.getLogger('chaqum.manager')
 
 loglevel_map = {
     'F': logging.CRITICAL,
@@ -138,6 +138,8 @@ class Manager:
         try:
             # wait for free slot
             job.set_waiting()
+            if grp.is_full:
+                job.log.info('Waiting for slot.')
             await grp.slot_free(job)
             job.set_running()
 

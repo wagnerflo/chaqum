@@ -2,9 +2,11 @@ from asyncio import sleep as async_sleep,Future
 from dataclasses import dataclass,field
 from enum import Enum
 from itertools import count
-from logging import getLogger,Logger
+from logging import getLogger,LoggerAdapter
 from psutil import cpu_percent
 from typing import List
+
+log = getLogger('chaqum.job')
 
 class JobState(Enum):
     INIT = 0
@@ -19,10 +21,10 @@ class Job:
     script: str
     args: List[str] = field(default_factory=list)
     state: JobState = field(default=JobState.INIT, init=False)
-    log: Logger = field(init=False)
+    log: LoggerAdapter = field(init=False)
 
     def __post_init__(self):
-        self.log = getLogger(f'chaqum.{self.ident}')
+        self.log = LoggerAdapter(log, extra=dict(job=self))
 
     @property
     def is_running(self):
@@ -52,9 +54,6 @@ class Group(dict):
         for i in count():
             if not self.is_full:
                 break
-
-            if not i:
-                job.log.info('Waiting for slot.')
 
             await async_sleep(0.5)
 

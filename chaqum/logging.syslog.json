@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "disable_existing_loggers": 0,
+  "formatters": {
+    "default": {
+      "class": "logging.Formatter",
+      "style": "{",
+      "format": "{message}"
+    },
+    "job": {
+      "class": "logging.Formatter",
+      "style": "{",
+      "format": "[{job.ident}] {message}"
+    }
+  },
+  "handlers": {
+    "default":{
+      "class": "noblklog.AsyncSyslogHandler",
+      "appname": "cfg://syslog.appname",
+      "facility": "cfg://syslog.facility",
+      "formatter": "default"
+    },
+    "job":{
+      "class": "noblklog.AsyncSyslogHandler",
+      "appname": "cfg://syslog.appname",
+      "facility": "cfg://syslog.facility",
+      "formatter": "job"
+    }
+  },
+  "root": {
+    "handlers": ["default"],
+    "level": "cfg://levels.root"
+  },
+  "loggers": {
+    "apscheduler": {
+      "level": "cfg://levels.apscheduler"
+    },
+    "chaqum.job": {
+      "level": "cfg://levels.root",
+      "handlers": ["job"],
+      "propagate": 0
+    }
+  }
+}
