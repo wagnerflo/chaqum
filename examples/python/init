@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+
+from chaqum.lib import *
+
+log.warning('HALLO')
+
+job = enqueue('test', 'abc')
+job.wait()
+
+interval('test', 'INTERVAL', seconds=5)

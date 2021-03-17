@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+
+from chaqum.lib import log,job,waitjobs
+from sys import argv
+
+log.info('TEST', argv)
