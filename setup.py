@@ -32,4 +32,7 @@ setup(
             'chaqum=chaqum.cmdline:main',
         ],
     },
+    package_data={
+        'chaqum': [ 'logging.*.json' ],
+    }
 )

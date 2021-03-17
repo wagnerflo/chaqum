@@ -1,3 +1,5 @@
 __pycache__/
 .pyenv/*
 !.pyenv/.keep
+chaqum.egg-info/
+dist/
