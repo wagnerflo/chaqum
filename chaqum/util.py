@@ -3,6 +3,8 @@ import re
 
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+from errno import ENOENT,ENOTDIR
+from pathlib import Path
 
 def optstring(optstr):
     def decorator(func):
@@ -72,16 +74,36 @@ def opts_to_keywords(opts, **kws):
         if (val := opt_to_value(opts, opt, conv)) is not None
     }
 
-def check_script(base, script):
-    path = base / script
-
+def path_exists(path):
+    path = Path(path)
     if not path.exists():
-        raise Exception(f"Job '{script}' does not exist.")
+        raise FileNotFoundError(
+            ENOENT, f"{os.strerror(ENOENT)}: '{path}'"
+        )
+    return path
 
+def path_is_dir(path):
+    path = Path(path)
+    path_exists(path)
+    if not path.is_dir():
+        raise OSError(
+            ENOTDIR, f"{os.strerror(ENOTDIR)}: '{path}'"
+        )
+    return path
+
+def path_is_file(path):
+    path = Path(path)
+    path_exists(path)
     if not path.is_file():
-        raise Exception(f"Job '{script}' is not a file.")
+        raise OSError(
+            ENOENT, f"Not a file: '{path}'"
+        )
+    return path
 
+def path_is_executable(path):
+    path = Path(path)
     if not os.access(path, os.X_OK):
-        raise Exception(f"Job '{init}' is not executable.")
-
+        raise OSError(
+            EACCES, f"{os.strerror(EACCES)}: '{path}'"
+        )
     return path

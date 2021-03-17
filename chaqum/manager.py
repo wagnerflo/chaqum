@@ -10,12 +10,14 @@ from apscheduler.events import EVENT_JOB_REMOVED,EVENT_ALL_JOBS_REMOVED
 
 from .dataclasses import Job,Group
 from .util import (
-    check_script,
     optstring,
     parse_interval,
     parse_cron,
     opt_to_value,
     opts_to_keywords,
+    path_is_file,
+    path_is_dir,
+    path_is_executable,
 )
 
 log = logging.getLogger('chaqum')
@@ -32,14 +34,16 @@ class UnknownCommand(Exception):
     pass
 
 class Manager:
-    def __init__(self, path):
-        self._path = path
+    def __init__(self, path, init_script_name='init'):
+        self._path = path_is_dir(path)
+        self._init_script_name = init_script_name
         self._jobs = None
         self._groups = None
         self._sched = None
         self._loop = None
         self._done = None
         self._pid = None
+        self._check_script(init_script_name)
 
     @property
     def is_done(self):
@@ -54,6 +58,11 @@ class Manager:
             if not self._done.done():
                 self._done.set_result(True)
             return True
+
+    def _check_script(self, script):
+        path = self._path / script
+        path_is_file(path)
+        path_is_executable(path)
 
     async def run(self, *init_args):
         if self._done is not None:
@@ -76,7 +85,10 @@ class Manager:
 
         # start the scheduler, wait for the init job and then until done
         self._sched.start()
-        await self.register_job('init', ident='init', args=init_args)
+        await self.register_job(
+            self._init_script_name, args=init_args,
+            ident='init',
+        )
         await self._done
 
         log.debug('Job manager shutting down.')
@@ -92,7 +104,7 @@ class Manager:
         log.debug('Job manager stopped.')
 
     def register_job(self, script, args=[], ident=None, group=None, max_jobs=0):
-        check_script(self._path, script)
+        self._check_script(script)
 
         if ident is None:
             ident = f'{script}/{next(self._pid)}'

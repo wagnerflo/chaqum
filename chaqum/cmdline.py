@@ -7,10 +7,8 @@ def main():
         AsyncStreamHandler,
         AsyncSyslogHandler,
     )
-    from pathlib import Path
     from sys import stderr
 
-    from .util import check_script
     from .manager import Manager
 
     prog = 'chaqum'
@@ -31,7 +29,6 @@ def main():
     )
     parser.add_argument(
         'directory',
-        type=Path,
         help=(
             "Path to the job tree. Minimally required to a directory "
             "containing a executable file called 'init'."
@@ -47,23 +44,18 @@ def main():
 
     args = parser.parse_args()
 
-    def err(*args):
-        print(*args, file=stderr, flush=True)
-
-    if not args.directory.exists():
-        err(f"{prog}: Path '{args.directory}' does not exist.")
-        return 1
-
-    if not args.directory.is_dir():
-        err(f"{prog}: Path '{args.directory}' is no directory.")
-        return 1
-
     try:
-        check_script(args.directory, 'init')
+        # create the job manager; constructur runs sanity checks for
+        # the job tree directory
+        mgr = Manager(args.directory)
 
     except Exception as exc:
-        err(f"{prog}: {exc}")
+        print(f"{prog}: {exc}", file=stderr, flush=True)
         return 1
+
+    except OSError as exc:
+        print(f"{prog}: {exc}", file=stderr, flush=True)
+        return exc.errno
 
     lvl_root = logging.INFO
     lvl_apsched = logging.WARN
@@ -91,7 +83,6 @@ def main():
     logging.getLogger('apscheduler').setLevel(lvl_apsched)
 
     try:
-        mgr = Manager(args.directory)
         asyncio.run(mgr.run(*args.arguments))
     except KeyboardInterrupt:
         print(file=stderr)
