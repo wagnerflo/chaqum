@@ -35,17 +35,26 @@ def main():
         )
     )
     parser.add_argument(
+        '-e', '--entry',
+        default='entry',
+        help=(
+            "Set the entry script to run as the first in the job tree. "
+            "Defaults to 'entry'."
+        )
+    )
+    parser.add_argument(
         'directory',
         help=(
             "Path to the job tree. Needs to be a directory containing "
-            "at least a executable file called 'entry'."
+            "at least a executable file called 'entry' (or what -e is "
+            "set to)."
         )
     )
     parser.add_argument(
         'arguments',
         nargs='*',
         help=(
-            "Arguments passed on to the 'entry' job."
+            "Arguments passed on to the 'entry'/-e job."
         )
     )
 
@@ -54,7 +63,10 @@ def main():
     try:
         # create the job manager; constructur runs sanity checks for
         # the job tree directory
-        mgr = Manager(args.directory)
+        mgr = Manager(
+            path = args.directory,
+            entry_script_name = args.entry,
+        )
 
         # configure logging
         appname = None
