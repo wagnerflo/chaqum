@@ -89,7 +89,7 @@ class Manager:
         self._sched.start()
         await self.register_job(
             self._entry_script_name, args=entry_args,
-            ident='entry',
+            ident=self._entry_script_name,
         )
         await self._done
 
