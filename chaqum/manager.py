@@ -18,6 +18,7 @@ from .util import (
     path_is_file,
     path_is_dir,
     path_is_executable,
+    MAXFD,
 )
 
 log = logging.getLogger('chaqum.manager')
@@ -151,6 +152,7 @@ class Manager:
             def preexec_fn():
                 os.dup2(child_wr_fd, 3)
                 os.dup2(child_rd_fd, 4)
+                os.closerange(5, MAXFD)
 
             job.log.info('Starting job.')
 
@@ -160,7 +162,7 @@ class Manager:
                 stdin=asyncio.subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
-                pass_fds={ 3, 4 },
+                close_fds=False,
                 preexec_fn=preexec_fn,
                 cwd=self._path,
             )

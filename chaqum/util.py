@@ -6,6 +6,11 @@ from apscheduler.triggers.interval import IntervalTrigger
 from errno import ENOENT,ENOTDIR,EACCES
 from pathlib import Path
 
+try:
+    MAXFD = os.sysconf('SC_OPEN_MAX')
+except Exception:
+    MAXFD = 256
+
 def optstring(optstr):
     def decorator(func):
         func.optstring = optstr
