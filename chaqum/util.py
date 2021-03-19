@@ -3,7 +3,7 @@ import re
 
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-from errno import ENOENT,ENOTDIR
+from errno import ENOENT,ENOTDIR,EACCES
 from pathlib import Path
 
 def optstring(optstr):
