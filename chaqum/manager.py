@@ -34,16 +34,16 @@ class UnknownCommand(Exception):
     pass
 
 class Manager:
-    def __init__(self, path, init_script_name='init'):
+    def __init__(self, path, entry_script_name='entry'):
         self._path = path_is_dir(path)
-        self._init_script_name = init_script_name
+        self._entry_script_name = entry_script_name
         self._jobs = None
         self._groups = None
         self._sched = None
         self._loop = None
         self._done = None
         self._pid = None
-        self._check_script(init_script_name)
+        self._check_script(entry_script_name)
 
     @property
     def is_done(self):
@@ -64,7 +64,7 @@ class Manager:
         path_is_file(path)
         path_is_executable(path)
 
-    async def run(self, *init_args):
+    async def run(self, *entry_args):
         if self._done is not None:
             raise Exception(f'{self} already running')
 
@@ -83,11 +83,12 @@ class Manager:
 
         log.info('Job manager starting.')
 
-        # start the scheduler, wait for the init job and then until done
+        # start the scheduler, wait for the entry job to complete and
+        # then until done
         self._sched.start()
         await self.register_job(
-            self._init_script_name, args=init_args,
-            ident='init',
+            self._entry_script_name, args=entry_args,
+            ident='entry',
         )
         await self._done
 
