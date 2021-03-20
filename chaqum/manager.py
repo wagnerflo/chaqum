@@ -149,7 +149,7 @@ class Manager:
             if grp.is_full:
                 job.log.info('Waiting for slot.')
             await grp.slot_free()
-            job.set_running()
+            job.set_starting()
 
             # prepare command pipes
             rd_fd, child_wr_fd = os.pipe()
@@ -195,7 +195,8 @@ class Manager:
             logtask = LoggingTask(self._loop, job, proc.stdout)
             cmdtask = CommandTask(self._loop, self, job, rd, wr)
 
-            # wait for process and tasks to exit
+            # set job to running and wait for process and tasks to exit
+            job.set_running()
             await proc.wait()
             await logtask
             await cmdtask

@@ -6,10 +6,11 @@ from psutil import cpu_percent
 log = getLogger('chaqum.job')
 
 class JobState(Enum):
-    INIT = 0
-    WAITING = 1
-    RUNNING = 2
-    DONE = 3
+    INIT     = 1
+    WAITING  = 2
+    STARTING = 3
+    RUNNING  = 4
+    DONE     = 5
 
 class Job:
     def __init__(self, loop, ident, script, *args):
@@ -24,6 +25,10 @@ class Job:
     @property
     def is_waiting(self):
         return self.state == JobState.WAITING
+
+    @property
+    def is_starting(self):
+        return self.state == JobState.STARTING
 
     @property
     def is_running(self):
@@ -45,6 +50,9 @@ class Job:
 
     def set_waiting(self):
         self.set_state(JobState.WAITING)
+
+    def set_starting(self):
+        self.set_state(JobState.STARTING)
 
     def set_running(self):
         self.set_state(JobState.RUNNING)
@@ -83,10 +91,13 @@ class Group(dict):
     @property
     def is_full(self):
         return (
-            ( self.max_jobs and self.num_running_jobs >= self.max_jobs ) or
+            ( self.max_jobs and self.num_slots_used >= self.max_jobs ) or
             ( self.max_load and cpu_percent() >= self.max_load )
         )
 
     @property
-    def num_running_jobs(self):
-        return sum(1 for job in self.values() if job.is_running)
+    def num_slots_used(self):
+        return sum(
+            1 for job in self.values()
+            if job.state in (JobState.STARTING, JobState.RUNNING)
+        )
