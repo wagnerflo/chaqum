@@ -1,4 +1,4 @@
-from asyncio import sleep as async_sleep,Event
+from asyncio import sleep as async_sleep
 from enum import Enum
 from logging import getLogger,LoggerAdapter
 from psutil import cpu_percent
@@ -13,12 +13,13 @@ class JobState(Enum):
 
 class Job:
     def __init__(self, loop, ident, script, *args):
+        self.loop = loop
         self.ident = ident
         self.script = script
         self.args = args
         self.state = JobState.INIT
         self.log = LoggerAdapter(log, extra=dict(job=self))
-        self._state_changed = Event(loop=loop)
+        self._state_waiters = []
 
     @property
     def is_waiting(self):
@@ -37,8 +38,10 @@ class Job:
             return
 
         self.state = newstate
-        self._state_changed.set()
-        self._state_changed.clear()
+        self._state_waiters = [
+            waiter for waiter in self._state_waiters
+            if not self._notify_waiter(newstate, *waiter)
+        ]
 
     def set_waiting(self):
         self.set_state(JobState.WAITING)
@@ -49,17 +52,23 @@ class Job:
     def set_done(self):
         self.set_state(JobState.DONE)
 
-    async def state_changed(self, *limit_to):
+    def state_changed(self, *limit_to):
         if not limit_to:
             limit_to = list(JobState)
 
-        while self.state not in limit_to:
-            await self._state_changed.wait()
+        fut = self.loop.create_future()
+        self._state_waiters.append((fut, limit_to))
+        return fut
 
-        return self.state
+    def wait_done(self):
+        return self.state_changed(JobState.DONE)
 
-    async def wait_done(self):
-        return await self.state_changed(JobState.DONE)
+    def _notify_waiter(self, newstate, fut, limit_to):
+        if newstate not in limit_to:
+            return False
+
+        fut.set_result(True)
+        return True
 
 class Group(dict):
     def __init__(self, ident, max_jobs=0, max_load=0.0):
