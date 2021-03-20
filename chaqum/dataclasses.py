@@ -1,5 +1,6 @@
 import asyncio
 
+from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 from logging import getLogger,LoggerAdapter
@@ -98,6 +99,7 @@ class Group(dict):
 
         self._jobs_cond = None
         self._stats_cond = None
+        self._queue = None
 
         if config.max_jobs:
             self._jobs_cond = lambda num_running: (
@@ -109,7 +111,8 @@ class Group(dict):
                 self.stats.cpu_percent < config.max_cpu,
             ))
 
-        self._queue = [] if self._jobs_cond or self._stats_cond else None
+        if self._jobs_cond or self._stats_cond:
+            self._queue = deque()
 
     async def acquire_slot(self, job):
         if self._queue is None:
@@ -119,14 +122,16 @@ class Group(dict):
         job.set_waiting()
         log = run_once(job.log.info, 'Waiting for slot.')
 
+        # Peek at the end of the queue.
+        precursor = self._queue[-1] if self._queue else None
+
         # Make myself known in the queue.
         self._queue.append(self.loop.create_future())
 
-        # Wait until everyone also waiting for a slot that is in line
-        # before me, has been served.
-        if precursors := self._queue[:-1]:
+        # Wait until the job in front of me has been served.
+        if precursor is not None:
             log()
-            await asyncio.wait(precursors)
+            await precursor
 
         # Do we need to wait for another job in this group to finish?
         if self._jobs_cond:
@@ -152,5 +157,5 @@ class Group(dict):
         job.set_running()
 
         # Make the queue advance.
-        if not (fut := self._queue.pop(0)).cancelled():
+        if not (fut := self._queue.popleft()).cancelled():
             fut.set_result(True)
