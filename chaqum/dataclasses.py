@@ -25,7 +25,9 @@ class Job:
         self.args = args
         self.state = JobState.INIT
         self.log = LoggerAdapter(log, extra=dict(job=self))
-        self._state_waiters = []
+        self._state_waiters = {
+            state: deque() for state in JobState
+        }
 
     @property
     def is_waiting(self):
@@ -48,10 +50,13 @@ class Job:
             return
 
         self.state = newstate
-        self._state_waiters = [
-            waiter for waiter in self._state_waiters
-            if not self._notify_waiter(newstate, *waiter)
-        ]
+        waiters = self._state_waiters[newstate]
+
+        for fut in waiters:
+            if not fut.cancelled():
+                fut.set_result(True)
+
+        waiters.clear()
 
     def set_waiting(self):
         self.set_state(JobState.WAITING)
@@ -65,25 +70,13 @@ class Job:
     def set_done(self):
         self.set_state(JobState.DONE)
 
-    def state_changed(self, *limit_to):
-        if not limit_to:
-            limit_to = list(JobState)
-
+    def _state_changed(self, to):
         fut = self.loop.create_future()
-        self._state_waiters.append((fut, limit_to))
+        self._state_waiters[to].append(fut)
         return fut
 
     def wait_done(self):
-        return self.state_changed(JobState.DONE)
-
-    def _notify_waiter(self, newstate, fut, limit_to):
-        if newstate not in limit_to:
-            return False
-
-        if not fut.cancelled():
-            fut.set_result(True)
-
-        return True
+        return self._state_changed(JobState.DONE)
 
 @dataclass
 class GroupConfig:
