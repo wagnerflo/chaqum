@@ -2,19 +2,19 @@ import asyncio
 import itertools
 import os
 import logging
-import shlex
 
-from getopt import getopt
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.events import EVENT_JOB_REMOVED,EVENT_ALL_JOBS_REMOVED
 
-from .dataclasses import Job,Group
+from .dataclasses import (
+    Job,
+    Group,
+)
+from .tasks import (
+    CommandTask,
+    LoggingTask,
+)
 from .util import (
-    optstring,
-    parse_interval,
-    parse_cron,
-    opt_to_value,
-    opts_to_keywords,
     path_is_file,
     path_is_dir,
     path_is_executable,
@@ -22,17 +22,6 @@ from .util import (
 )
 
 log = logging.getLogger('chaqum.manager')
-
-loglevel_map = {
-    'F': logging.CRITICAL,
-    'C': logging.CRITICAL,
-    'E': logging.ERROR,
-    'W': logging.WARNING,
-    'D': logging.DEBUG,
-}
-
-class UnknownCommand(Exception):
-    pass
 
 class Manager:
     def __init__(self, path, entry_script_name='entry'):
@@ -105,6 +94,17 @@ class Manager:
 
         log.debug('Job manager stopped.')
 
+    def register_repeat(self, script, args, trigger):
+        self._sched.add_job(
+            self.register_job,
+            kwargs = dict(
+                script = script,
+                args = args,
+            ),
+            trigger =trigger,
+            max_instances = 1,
+        )
+
     def register_job(self, script, args=[], ident=None, group=None, max_jobs=0):
         self._check_script(script)
 
@@ -133,6 +133,9 @@ class Manager:
 
         # return job object
         return job
+
+    def get_job(self, ident):
+        return self._jobs.get(ident)
 
     async def _run_job(self, job, grp):
         proc = None
@@ -185,20 +188,14 @@ class Manager:
                 None, self._loop
             )
 
-            # start task to handle task logging output
-            log = self._loop.create_task(
-                self._handle_logging(job, proc.stdout)
-            )
-
-            # start task to handle commands
-            cmd = self._loop.create_task(
-                self._handle_commands(job, rd, wr)
-            )
+            # start tasks to handle logging output and commands
+            logtask = LoggingTask(self._loop, job, proc.stdout)
+            cmdtask = CommandTask(self._loop, self, job, rd, wr)
 
             # wait for process and tasks to exit
             await proc.wait()
-            await log
-            await cmd
+            await logtask
+            await cmdtask
 
             job.log.info('Job completed.')
 
@@ -216,107 +213,3 @@ class Manager:
 
         # check if the manager is done running
         self._check_done()
-
-    async def _handle_logging(self, job, rd):
-        try:
-            while line := await rd.readline():
-                line = line.decode().rstrip()
-
-                if len(line) > 1 and line[1] == '\x1f':
-                    lvl = loglevel_map.get(line[0], logging.INFO)
-                    line = line[2:]
-                else:
-                    lvl = logging.INFO
-
-                job.log.log(lvl, line)
-
-        except asyncio.CancelledError:
-            pass
-
-    async def _handle_commands(self, job, rd, wr):
-        try:
-            while line := await rd.readline():
-                line = line.strip()
-                reply = 'E'
-
-                try:
-                    cmd,func,opts,args = self._parse_command(line.decode())
-                    reply = await func(self, opts, *args)
-
-                except UnknownCommand:
-                    job.log.error(f"Unknown command '{line.decode()}'")
-
-                except Exception as exc:
-                    job.log.error(f"{cmd}: {str(exc)}")
-
-                wr.write(reply.encode() + b'\n')
-                await wr.drain()
-
-        except asyncio.CancelledError:
-            pass
-
-    @optstring('i:c:')
-    async def _handle_repeat(self, opts, script, *args):
-        if interval := opts.get('-i'):
-            trigger = parse_interval(interval)
-
-        elif cron := opts.get('-c'):
-            trigger = parse_cron(cron)
-
-        else:
-            raise Exception('Missing repetition specifier (-i/-c).')
-
-        self._sched.add_job(
-            self.register_job, kwargs=dict(
-                script=script,
-                args=args,
-            ),
-            trigger=trigger,
-            max_instances=1,
-        )
-
-        return 'S'
-
-    @optstring('g:m:c:')
-    async def _handle_enqueue(self, opts, script, *args):
-        job = self.register_job(
-            script=script,
-            args=args,
-            **opts_to_keywords(
-                opts,
-                group    = ('-g', str),
-                max_jobs = ('-m', int),
-                max_load = ('-l', float),
-            )
-        )
-
-        return f'S {job.ident}'
-
-    @optstring('t:')
-    async def _handle_wait(self, opts, *idents):
-        timeout = opt_to_value(opts, '-t', float)
-        jobs = {
-            job.done: job
-            for ident in idents
-            if (job := self._jobs.get(ident)) is not None
-        }
-
-        done,pending = await asyncio.wait(jobs.keys(), timeout=timeout)
-
-        return ' '.join(
-            ['T' if pending else 'S'] +
-            [jobs[fut].ident for fut in done]
-        )
-
-    _COMMANDS = {
-        'repeat': _handle_repeat,
-        'enqueue': _handle_enqueue,
-        'wait': _handle_wait,
-    }
-
-    def _parse_command(self, cmd):
-        cmd,*args = shlex.split(cmd)
-        if func := self._COMMANDS.get(cmd, None):
-            opts,args = getopt(args, func.optstring)
-            return cmd,func,dict(opts),args
-        raise UnknownCommand()
