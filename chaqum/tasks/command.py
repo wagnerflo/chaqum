@@ -153,7 +153,7 @@ class CommandTask:
                         opts,
                         ident    = ('-g', str),
                         max_jobs = ('-m', int),
-                        max_load = ('-l', float),
+                        max_cpu  = ('-c', float),
                     )
                 ),
             )

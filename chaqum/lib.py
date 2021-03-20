@@ -50,12 +50,12 @@ class job:
     def wait(self, timeout=None):
         return waitjobs(self)
 
-def enqueue(script, *args, group=None, max_jobs=None, max_load=None):
+def enqueue(script, *args, group=None, max_jobs=None, max_cpu=None):
     _send_command(
         'enqueue',
-        *() if group is None else ('-g', group),
+        *() if group    is None else ('-g', group),
         *() if max_jobs is None else ('-m', max_jobs),
-        *() if max_load is None else ('-l', max_load),
+        *() if max_cpu  is None else ('-c', max_cpu),
         '--',
         script, *args
     )

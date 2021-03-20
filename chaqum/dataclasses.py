@@ -85,13 +85,13 @@ class Job:
 class GroupConfig:
     ident: str = None
     max_jobs: int = 0
-    max_load: float = 0.0
+    max_cpu: float = 0.0
 
 class Group(dict):
     def __init__(self, config):
         self.ident = config.ident
         self.max_jobs = config.max_jobs
-        self.max_load = config.max_load
+        self.max_cpu = config.max_cpu
 
     async def slot_free(self):
         while self.is_full:
@@ -101,7 +101,7 @@ class Group(dict):
     def is_full(self):
         return (
             ( self.max_jobs and self.num_slots_used >= self.max_jobs ) or
-            ( self.max_load and cpu_percent() >= self.max_load )
+            ( self.max_cpu and cpu_percent() >= self.max_cpu )
         )
 
     @property
