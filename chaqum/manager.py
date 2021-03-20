@@ -78,8 +78,9 @@ class Manager:
         self._sched.start()
 
         entry = self.register_job(
-            self._entry_script_name, args=entry_args,
-            ident=self._entry_script_name,
+            self._entry_script_name,
+            args = entry_args,
+            ident = self._entry_script_name,
         )
 
         await entry.wait_done()
