@@ -1,13 +1,13 @@
-import os
 import re
 
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from errno import ENOENT,ENOTDIR,EACCES
+from os import access,strerror,sysconf,X_OK
 from pathlib import Path
 
 try:
-    MAXFD = os.sysconf('SC_OPEN_MAX')
+    MAXFD = sysconf('SC_OPEN_MAX')
 except Exception:
     MAXFD = 256
 
@@ -83,7 +83,7 @@ def path_exists(path):
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(
-            ENOENT, f"{os.strerror(ENOENT)}: '{path}'"
+            ENOENT, f"{strerror(ENOENT)}: '{path}'"
         )
     return path
 
@@ -92,7 +92,7 @@ def path_is_dir(path):
     path_exists(path)
     if not path.is_dir():
         raise OSError(
-            ENOTDIR, f"{os.strerror(ENOTDIR)}: '{path}'"
+            ENOTDIR, f"{strerror(ENOTDIR)}: '{path}'"
         )
     return path
 
@@ -107,8 +107,8 @@ def path_is_file(path):
 
 def path_is_executable(path):
     path = Path(path)
-    if not os.access(path, os.X_OK):
+    if not access(path, X_OK):
         raise OSError(
-            EACCES, f"{os.strerror(EACCES)}: '{path}'"
+            EACCES, f"{strerror(EACCES)}: '{path}'"
         )
     return path
