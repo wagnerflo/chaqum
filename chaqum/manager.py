@@ -9,6 +9,7 @@ from apscheduler.events import EVENT_JOB_REMOVED,EVENT_ALL_JOBS_REMOVED
 from .dataclasses import (
     Job,
     Group,
+    GroupConfig,
 )
 from .tasks import (
     CommandTask,
@@ -109,21 +110,15 @@ class Manager:
             max_instances = 1,
         )
 
-    def register_job(self, script, args=[], ident=None, group=None, max_jobs=0):
+    def register_job(self, script, args=[], ident=None, group=GroupConfig()):
         self._check_script(script)
 
         if ident is None:
             ident = f'{script}/{next(self._pid)}'
 
-        # create group
-        grp = self._groups.get(group)
-
-        if grp is None:
-            grp = self._groups[group] = Group(group)
-
-        # set parameters but only for none-default groups
-        if group is not None:
-            grp.max_jobs = max_jobs
+        # get or create group
+        if (grp := self._groups.get(group.ident)) is None:
+            grp = self._groups[group.ident] = Group(group)
 
         # create job object and register
         job = self._jobs[ident] = grp[ident] = Job(

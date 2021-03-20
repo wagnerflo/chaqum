@@ -1,4 +1,5 @@
 from asyncio import sleep as async_sleep
+from dataclasses import dataclass
 from enum import Enum
 from logging import getLogger,LoggerAdapter
 from psutil import cpu_percent
@@ -80,11 +81,17 @@ class Job:
 
         return True
 
+@dataclass
+class GroupConfig:
+    ident: str = None
+    max_jobs: int = 0
+    max_load: float = 0.0
+
 class Group(dict):
-    def __init__(self, ident, max_jobs=0, max_load=0.0):
-        self.ident = ident
-        self.max_jobs = max_jobs
-        self.max_load = max_load
+    def __init__(self, config):
+        self.ident = config.ident
+        self.max_jobs = config.max_jobs
+        self.max_load = config.max_load
 
     async def slot_free(self):
         while self.is_full:

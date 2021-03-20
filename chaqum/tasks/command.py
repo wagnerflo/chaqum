@@ -5,6 +5,7 @@ import shlex
 
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+from ..dataclasses import GroupConfig
 
 _RE_INTERVAL = re.compile(
     r'''
@@ -140,16 +141,24 @@ class CommandTask:
 
     @commands.add('g:m:c:')
     async def enqueue(self, opts, script, *args):
-        job = self.manager.register_job(
+        kws = dict(
             script = script,
             args = args,
-            **opts_to_keywords(
-                opts,
-                group    = ('-g', str),
-                max_jobs = ('-m', int),
-                max_load = ('-l', float),
-            )
         )
+
+        if '-g' in opts:
+            kws.update(
+                group = GroupConfig(
+                    **opts_to_keywords(
+                        opts,
+                        ident    = ('-g', str),
+                        max_jobs = ('-m', int),
+                        max_load = ('-l', float),
+                    )
+                ),
+            )
+
+        job = self.manager.register_job(**kws)
 
         return f"S {job.ident}"
 
