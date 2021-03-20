@@ -105,14 +105,17 @@ class CommandTask:
                         self.job.log.error(f"Unknown command '{line}'.")
 
                 except Exception as exc:
-                    self.job.log.error(f"Unparsable command '{line}': {exc}.")
+                    self.job.log.error(
+                        f"Unparsable command '{line}': {exc}.",
+                        exc_info=True
+                    )
 
                 if func is not None and opts is not None:
                     try:
                         reply = await func(self, dict(opts), *args)
 
                     except Exception as exc:
-                        self.job.log.error(f"{cmd}: {exc}")
+                        self.job.log.error(f"{cmd}: {exc}", exc_info=True)
 
                 self.wr.write(reply.encode() + b'\n')
                 await self.wr.drain()
