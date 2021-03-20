@@ -14,6 +14,7 @@ from .dataclasses import (
 from .tasks import (
     CommandTask,
     LoggingTask,
+    StatsTask,
 )
 from .util import (
     path_is_file,
@@ -28,10 +29,11 @@ class Manager:
     def __init__(self, path, entry_script_name='entry'):
         self._path = path_is_dir(path)
         self._entry_script_name = entry_script_name
+        self._loop = None
         self._jobs = None
         self._groups = None
         self._sched = None
-        self._loop = None
+        self._stats = None
         self._done = None
         self._pid = None
         self._check_script(entry_script_name)
@@ -59,10 +61,11 @@ class Manager:
         if self._done is not None:
             raise Exception(f'{self} already running')
 
+        self._loop = asyncio.get_running_loop()
         self._jobs = {}
         self._groups = {}
         self._sched = AsyncIOScheduler()
-        self._loop = asyncio.get_running_loop()
+        self._stats = StatsTask(self._loop)
         self._done = self._loop.create_future()
         self._pid = itertools.count(1)
 
@@ -91,9 +94,10 @@ class Manager:
 
         # cleanup
         self._sched.shutdown(wait=False)
+        self._loop = None
         self._jobs = None
         self._sched = None
-        self._loop = None
+        self._stats = None
         self._done = None
         self._pid = None
 
@@ -118,7 +122,9 @@ class Manager:
 
         # get or create group
         if (grp := self._groups.get(group.ident)) is None:
-            grp = self._groups[group.ident] = Group(group)
+            grp = self._groups[group.ident] = Group(
+                self._loop, self._stats, group
+            )
 
         # create job object and register
         job = self._jobs[ident] = grp[ident] = Job(
@@ -141,11 +147,7 @@ class Manager:
 
         try:
             # wait for free slot
-            job.set_waiting()
-            if grp.is_full:
-                job.log.info('Waiting for slot.')
-            await grp.slot_free()
-            job.set_starting()
+            await grp.acquire_slot(job)
 
             # prepare command pipes
             rd_fd, child_wr_fd = os.pipe()

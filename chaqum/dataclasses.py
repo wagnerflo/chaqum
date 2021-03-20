@@ -1,8 +1,11 @@
-from asyncio import sleep as async_sleep
+import asyncio
+
 from dataclasses import dataclass
 from enum import Enum
 from logging import getLogger,LoggerAdapter
 from psutil import cpu_percent
+
+from .util import run_once
 
 log = getLogger('chaqum.job')
 
@@ -88,25 +91,66 @@ class GroupConfig:
     max_cpu: float = 0.0
 
 class Group(dict):
-    def __init__(self, config):
+    def __init__(self, loop, stats, config):
+        self.loop = loop
+        self.stats = stats
         self.ident = config.ident
-        self.max_jobs = config.max_jobs
-        self.max_cpu = config.max_cpu
 
-    async def slot_free(self):
-        while self.is_full:
-            await async_sleep(0.5)
+        self._jobs_cond = None
+        self._stats_cond = None
 
-    @property
-    def is_full(self):
-        return (
-            ( self.max_jobs and self.num_slots_used >= self.max_jobs ) or
-            ( self.max_cpu and cpu_percent() >= self.max_cpu )
-        )
+        if config.max_jobs:
+            self._jobs_cond = lambda num_running: (
+                num_running < config.max_jobs
+            )
 
-    @property
-    def num_slots_used(self):
-        return sum(
-            1 for job in self.values()
-            if job.state in (JobState.STARTING, JobState.RUNNING)
-        )
+        if config.max_cpu:
+            self._stats_cond = lambda: all((
+                self.stats.cpu_percent < config.max_cpu,
+            ))
+
+        self._queue = [] if self._jobs_cond or self._stats_cond else None
+
+    async def acquire_slot(self, job):
+        if self._queue is None:
+            job.set_running()
+            return
+
+        job.set_waiting()
+        log = run_once(job.log.info, 'Waiting for slot.')
+
+        # Make myself known in the queue.
+        self._queue.append(self.loop.create_future())
+
+        # Wait until everyone also waiting for a slot that is in line
+        # before me, has been served.
+        if precursors := self._queue[:-1]:
+            log()
+            await asyncio.wait(precursors)
+
+        # Do we need to wait for another job in this group to finish?
+        if self._jobs_cond:
+            runnung_jobs = [
+                job for job in self.values()
+                if job.state in (JobState.STARTING, JobState.RUNNING)
+            ]
+
+            if not self._jobs_cond(len(runnung_jobs)):
+                log()
+                await asyncio.wait(
+                    [job.wait_done() for job in runnung_jobs],
+                    return_when=asyncio.FIRST_COMPLETED
+                )
+
+        # Do we need to wait for system statistics to reach acceptable
+        # levels?
+        if self._stats_cond:
+            log()
+            await self.stats.notify_when(self._stats_cond)
+
+        # We got ourselves a slot.
+        job.set_running()
+
+        # Make the queue advance.
+        if not (fut := self._queue.pop(0)).cancelled():
+            fut.set_result(True)

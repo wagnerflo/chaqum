@@ -1,4 +1,5 @@
 from errno import ENOENT,ENOTDIR,EACCES
+from functools import wraps
 from os import access,strerror,sysconf,X_OK
 from pathlib import Path
 
@@ -40,3 +41,13 @@ def path_is_executable(path):
             EACCES, f"{strerror(EACCES)}: '{path}'"
         )
     return path
+
+def run_once(func, *args, **kws):
+    once = False
+    @wraps(func)
+    def wrapper():
+        nonlocal once
+        if not once:
+            once = True
+            return func(*args, **kws)
+    return wrapper
