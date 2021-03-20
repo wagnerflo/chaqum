@@ -75,7 +75,9 @@ class Job:
         if newstate not in limit_to:
             return False
 
-        fut.set_result(True)
+        if not fut.cancelled():
+            fut.set_result(True)
+
         return True
 
 class Group(dict):
