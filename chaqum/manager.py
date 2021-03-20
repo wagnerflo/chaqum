@@ -76,10 +76,13 @@ class Manager:
         # start the scheduler, wait for the entry job to complete and
         # then until done
         self._sched.start()
-        await self.register_job(
+
+        entry = self.register_job(
             self._entry_script_name, args=entry_args,
             ident=self._entry_script_name,
         )
+
+        await entry.wait_done()
         await self._done
 
         log.debug('Job manager shutting down.')
@@ -123,7 +126,7 @@ class Manager:
 
         # create job object and register
         job = self._jobs[ident] = grp[ident] = Job(
-            ident, self._loop.create_future(), script, args
+            self._loop, ident, script, *args
         )
 
         log.debug(f"Registering job '{' '.join((script,) + args)}'.")

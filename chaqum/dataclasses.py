@@ -1,9 +1,7 @@
-from asyncio import sleep as async_sleep,Future
-from dataclasses import dataclass,field
+from asyncio import sleep as async_sleep,Event
 from enum import Enum
 from logging import getLogger,LoggerAdapter
 from psutil import cpu_percent
-from typing import List
 
 log = getLogger('chaqum.job')
 
@@ -13,41 +11,61 @@ class JobState(Enum):
     RUNNING = 2
     DONE = 3
 
-@dataclass
 class Job:
-    ident: str
-    done: Future
-    script: str
-    args: List[str] = field(default_factory=list)
-    state: JobState = field(default=JobState.INIT, init=False)
-    log: LoggerAdapter = field(init=False)
-
-    def __post_init__(self):
+    def __init__(self, loop, ident, script, *args):
+        self.ident = ident
+        self.script = script
+        self.args = args
+        self.state = JobState.INIT
         self.log = LoggerAdapter(log, extra=dict(job=self))
+        self._state_changed = Event(loop=loop)
+
+    @property
+    def is_waiting(self):
+        return self.state == JobState.WAITING
 
     @property
     def is_running(self):
         return self.state == JobState.RUNNING
 
+    @property
+    def is_done(self):
+        return self.state == JobState.DONE
+
+    def set_state(self, newstate):
+        if newstate == self.state:
+            return
+
+        self.state = newstate
+        self._state_changed.set()
+        self._state_changed.clear()
+
     def set_waiting(self):
-        self.state = JobState.WAITING
+        self.set_state(JobState.WAITING)
 
     def set_running(self):
-        self.state = JobState.RUNNING
+        self.set_state(JobState.RUNNING)
 
     def set_done(self):
-        self.state = JobState.DONE
-        if not self.done.done():
-            self.done.set_result(True)
+        self.set_state(JobState.DONE)
 
-    def __await__(self):
-        return self.done.__await__()
+    async def state_changed(self, *limit_to):
+        if not limit_to:
+            limit_to = list(JobState)
 
-@dataclass
+        while self.state not in limit_to:
+            await self._state_changed.wait()
+
+        return self.state
+
+    async def wait_done(self):
+        return await self.state_changed(JobState.DONE)
+
 class Group(dict):
-    ident: str
-    max_jobs: int = field(default=0)
-    max_load: float = field(default=0.0)
+    def __init__(self, ident, max_jobs=0, max_load=0.0):
+        self.ident = ident
+        self.max_jobs = max_jobs
+        self.max_load = max_load
 
     async def slot_free(self):
         while self.is_full:

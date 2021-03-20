@@ -154,7 +154,7 @@ class CommandTask:
     async def wait(self, opts, *idents):
         timeout = opt_to_value(opts, '-t', float)
         jobs = {
-            job.done: job
+            job.wait_done(): job
             for ident in idents
             if (job := self.manager.get_job(ident)) is not None
         }
