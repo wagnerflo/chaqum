@@ -44,6 +44,7 @@ def main():
     )
     parser.add_argument(
         'directory',
+        metavar='DIRECTORY',
         help=(
             "Path to the job tree. Needs to be a directory containing "
             "at least a executable file called 'entry' (or what -e is "
@@ -52,6 +53,7 @@ def main():
     )
     parser.add_argument(
         'arguments',
+        metavar='ARGUMENT',
         nargs='*',
         help=(
             "Arguments passed on to the 'entry'/-e job."
