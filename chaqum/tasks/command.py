@@ -164,16 +164,18 @@ class CommandTask:
 
     @commands.add('t:')
     async def wait(self, opts, *idents):
-        timeout = opt_to_value(opts, '-t', float)
         jobs = {
             job.wait_done(): job
             for ident in idents
             if (job := self.manager.get_job(ident)) is not None
         }
 
-        done,pending = await asyncio.wait(jobs.keys(), timeout=timeout)
+        _,pending = await asyncio.wait(
+            jobs.keys(),
+            timeout=opt_to_value(opts, '-t', float),
+        )
 
         return ' '.join(
             ['T' if pending else 'S'] +
-            [jobs[fut].ident for fut in done]
+            [jobs[fut].ident for fut in pending]
         )

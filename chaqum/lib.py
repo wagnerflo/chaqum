@@ -96,14 +96,15 @@ def waitjobs(*jobs, timeout=None):
         '--',
         *(job.ident for job in jobs)
     )
-    status,done = _recv_response()
+    status,pending = _recv_response()
     if status not in ('T', 'S'):
         raise Exception()
-    done = done.split(' ')
-    return (
-        status == 'T',
-        [job for job in jobs if job.ident in done]
-    )
+    if not pending:
+        return []
+    pending = pending.split(' ')
+    return [
+        job for job in jobs if job.ident in pending
+    ]
 
 __all__ = (
     'log',
