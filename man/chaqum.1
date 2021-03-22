@@ -1,0 +1,58 @@
+.Dd $Mdocdate$
+.Dt chaqum 1
+.Os
+.Sh NAME
+.Nm chaqum
+.Nd [ˈkeɪkjuːm], the queue manager for chaotic job queues
+.Sh SYNOPSIS
+.Nm
+.Op Fl hv
+.Op Fl e Ar ENTRY
+.Op Fl l Ar LOG
+.Ar DIRECTORY
+.Op Ar ARGUMENT ...
+.Sh DESCRIPTION
+Start a job manager with
+.Ar DIRECTORY
+as its job tree passing
+.Ar ARGUMENT ...
+as commandline parameters to the initial job script
+.Ar ENTRY .
+Then run the job manager as long as there are jobs running or repeats
+registered or it receives
+.Dv SIGINT ,
+.Dv SIGHUP
+or
+.Dv SIGTERM .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl h
+Show a help message and exit.
+.It Fl v
+Turn on verbose logging. Can be repeated up to two times for even more
+verbosity.
+.It Fl e , \-entry Ar ENTRY
+Set the entry script to run as the first in the job tree. Defaults to
+.Dv 'entry' .
+.It Fl l , \-log Ar LOG
+Configure logging. Defaults to
+.Dv 'console'
+which will log to stderr. Use 'syslog[:[APPNAME][:FACILITY]]' if you
+want log messages to be sent to local Syslog. Anything else will be
+interpreted as the path to a JSON file containing the Python
+.Fn logging.config.dictConfig
+format.
+.Sh PROTOCOL
+To allow jobs to communicate with the job manager
+.Nm chaqum
+implements a simple line based protocol.
+.Sh SEE ALSO
+.Xr chaqum.lib 3
+\(em Python job library,
+.Xr Chaqum 3
+\(em Perl job library,
+chaqum.sh 3
+\(em POSIX shell job library.
+.Sh COPYRIGHT
+Written by Florian Wagner.

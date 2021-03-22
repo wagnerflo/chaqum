@@ -1,0 +1,31 @@
+name: Convert man pages to HTML and deploy to gh-pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.1
+
+      - name: Install mandoc
+        run: sudo apt-get install mandoc
+
+      - name: Create directory
+        run: mkdir build
+
+      - name: Convert to HTML
+        run:  mandoc -mdoc -T html -O man=%N.%S.html,style=https://wagnerflo.github.io/chaqum/mandoc.css man/chaqum.1 > build/chaqum.1.html
+
+      - name: Copy CSS
+        run: cp -f man/mandoc.css build
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@4.1.0
+        with:
+          branch: gh-pages
+          folder: build
