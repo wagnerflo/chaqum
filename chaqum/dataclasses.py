@@ -25,9 +25,12 @@ class Job:
         self.args = args
         self.state = JobState.INIT
         self.log = LoggerAdapter(log, extra=dict(job=self))
+
         self._state_waiters = {
             state: deque() for state in JobState
         }
+        self._msg_inbox = deque()
+        self._msg_waiters = deque()
 
     @property
     def is_waiting(self):
@@ -75,8 +78,39 @@ class Job:
         self._state_waiters[to].append(fut)
         return fut
 
+    def wait_running(self):
+        return self._state_changed(JobState.RUNNING)
+
     def wait_done(self):
         return self._state_changed(JobState.DONE)
+
+    def _collect_message(self, result, was_collected, msg):
+        if not was_collected.cancelled():
+            was_collected.set_result(True)
+        if not result.cancelled():
+            result.set_result(msg)
+
+    def collect_message(self):
+        result = self.loop.create_future()
+
+        if self._msg_inbox:
+            self._collect_message(result, *self._msg_inbox.popleft())
+        else:
+            self._msg_waiters.append(result)
+
+        return result
+
+    def enqueue_message(self, msg):
+        was_collected = self.loop.create_future()
+
+        if self._msg_waiters:
+            self._collect_message(
+                self._msg_waiters.popleft(), was_collected, msg
+            )
+        else:
+            self._msg_inbox.append((was_collected, msg))
+
+        return was_collected
 
 @dataclass
 class GroupConfig:
@@ -115,8 +149,10 @@ class Group(dict):
         job.set_waiting()
         log = run_once(job.log.info, 'Waiting for slot.')
 
-        # Peek at the end of the queue.
-        precursor = self._queue[-1] if self._queue else None
+        try:
+            precursor = self._queue[-1]
+        except IndexError:
+            precursor = None
 
         # Make myself known in the queue.
         self._queue.append(self.loop.create_future())
@@ -152,3 +188,9 @@ class Group(dict):
         # Make the queue advance.
         if not (fut := self._queue.popleft()).cancelled():
             fut.set_result(True)
+
+@dataclass
+class Message:
+    ident: str
+    data: bytes
+    delivered: asyncio.Future = None

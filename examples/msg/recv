@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+
+from chaqum.lib import *
+
+log.info('Waiting for message')
+log.info(recvjson())

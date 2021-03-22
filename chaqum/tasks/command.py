@@ -70,7 +70,7 @@ def opts_to_keywords(opts, **kws):
     }
 
 class CommandRegistry(dict):
-    def add(self, optstr):
+    def add(self, optstr=''):
         def decorator(func):
             func.optstring = optstr
             self[func.__name__] = func
@@ -118,7 +118,10 @@ class CommandTask:
                     except Exception as exc:
                         self.job.log.error(f"{cmd}: {exc}", exc_info=True)
 
-                self.wr.write(reply.encode() + b'\n')
+                if isinstance(reply, str):
+                    reply = (reply.encode(), b'\n')
+
+                self.wr.writelines(reply)
                 await self.wr.drain()
 
         except asyncio.CancelledError:
@@ -178,4 +181,54 @@ class CommandTask:
         return ' '.join(
             ['T' if pending else 'S'] +
             [jobs[fut].ident for fut in pending]
+        )
+
+    @commands.add()
+    async def sendmsg(self, opts, ident, length):
+        data = await self.rd.readexactly(int(length))
+        await self.rd.readuntil()
+
+        if (job := self.manager.get_job(ident)) is None:
+            raise Exception(f"Unknown message destination '{ident}'.")
+
+        msg = self.manager.register_message(data)
+        msg.delivered = job.enqueue_message(msg)
+
+        return f"S {msg.ident}"
+
+    @commands.add('t:')
+    async def waitrecv(self, opts, *idents):
+        messages = {
+            msg.delivered: msg
+            for ident in idents
+            if (msg := self.manager.get_message(ident)) is not None
+        }
+
+        _,pending = await asyncio.wait(
+            messages.keys(),
+            timeout=opt_to_value(opts, '-t', float),
+        )
+
+        return ' '.join(
+            ['T' if pending else 'S'] +
+            [messages[fut].ident for fut in pending]
+        )
+
+    @commands.add('t:')
+    async def recvmsg(self, opts):
+        fut = self.job.collect_message()
+        _,pending = await asyncio.wait(
+            [fut],
+            timeout=opt_to_value(opts, '-t', float),
+        )
+        if pending:
+            return 'T'
+
+        msg = fut.result()
+        self.manager.forget_message(msg)
+
+        return (
+            f"S {len(msg.data)}\n".encode('ascii'),
+            msg.data,
+            b"\n",
         )

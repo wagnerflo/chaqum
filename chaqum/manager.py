@@ -10,6 +10,7 @@ from .dataclasses import (
     Job,
     Group,
     GroupConfig,
+    Message,
 )
 from .tasks import (
     CommandTask,
@@ -29,13 +30,7 @@ class Manager:
     def __init__(self, path, entry_script_name='entry'):
         self._path = path_is_dir(path)
         self._entry_script_name = entry_script_name
-        self._loop = None
-        self._jobs = None
-        self._groups = None
-        self._sched = None
-        self._stats = None
-        self._done = None
-        self._pid = None
+        self._reset()
         self._check_script(entry_script_name)
 
     @property
@@ -64,10 +59,13 @@ class Manager:
         self._loop = asyncio.get_running_loop()
         self._jobs = {}
         self._groups = {}
+        self._messages = {}
         self._sched = AsyncIOScheduler()
         self._stats = StatsTask(self._loop)
         self._done = self._loop.create_future()
+
         self._pid = itertools.count(1)
+        self._mid = itertools.count(1)
 
         # add listener to get notified of relevant scheduler changes
         self._sched.add_listener(
@@ -94,14 +92,20 @@ class Manager:
 
         # cleanup
         self._sched.shutdown(wait=False)
+        self._reset()
+
+        log.debug('Job manager stopped.')
+
+    def _reset(self):
         self._loop = None
         self._jobs = None
+        self._groups = None
+        self._messages = None
         self._sched = None
         self._stats = None
         self._done = None
         self._pid = None
-
-        log.debug('Job manager stopped.')
+        self._mid = None
 
     def register_repeat(self, script, args, trigger):
         self._sched.add_job(
@@ -113,6 +117,17 @@ class Manager:
             trigger =trigger,
             max_instances = 1,
         )
+
+    def register_message(self, data):
+        ident = f"msg:{next(self._mid)}"
+        msg = self._messages[ident] = Message(ident, data)
+        return msg
+
+    def get_message(self, ident):
+        return self._messages.get(ident)
+
+    def forget_message(self, msg):
+        del self._messages[msg.ident]
 
     def register_job(self, script, args=[], ident=None, group=GroupConfig()):
         self._check_script(script)

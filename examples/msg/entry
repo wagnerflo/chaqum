@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+from chaqum.lib import *
+
+log.info('Starting recv job')
+job = enqueue('recv')
+
+log.info('Sending message')
+msg = job.sendjson({'hello': 'wörld', 'newline': '\n'})
+
+log.info('Waiting for message to be delivered')
+msg.waitrecv()
