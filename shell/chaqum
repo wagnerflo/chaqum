@@ -54,8 +54,8 @@ waitjobs () {
     printf "waitjobs" >&3
     printf " '%s'" "$@" >&3
     printf "\n" >&3
-    read status completed <&4
-    printf '%s\n' ${completed}
+    read status pending <&4
+    printf '%s\n' ${pending}
     case "${status}" in
         T) return 110 ;;
         S) return 0 ;;
