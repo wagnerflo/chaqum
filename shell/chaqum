@@ -51,7 +51,7 @@ enqueue () {
 waitjobs () {
     local status
     local completed
-    printf "wait" >&3
+    printf "waitjobs" >&3
     printf " '%s'" "$@" >&3
     printf "\n" >&3
     read status completed <&4

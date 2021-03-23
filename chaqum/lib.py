@@ -61,7 +61,7 @@ class job:
         return waitjobs(self)
 
     def sendmsg(self, buf):
-        _send_command('sendmsg', self.ident, len(buf), flush=False)
+        _send_command('sendmsg', '--', self.ident, len(buf), flush=False)
         pipe_wr.write(buf)
         pipe_wr.write(b'\n')
         pipe_wr.flush()
@@ -114,7 +114,7 @@ def cron(script, *args,
 
 def waitjobs(*jobs, timeout=None):
     _send_command(
-        'wait',
+        'waitjobs',
         *() if timeout is None else ('-t', timeout),
         '--',
         *(job.ident for job in jobs)
@@ -137,6 +137,7 @@ def waitrecv(*messages, timeout=None):
     _send_command(
         'waitrecv',
         *() if timeout is None else ('-t', timeout),
+        '--',
         *idents
     )
     status,pending = _recv_response()

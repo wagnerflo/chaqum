@@ -166,7 +166,7 @@ class CommandTask:
         return f"S {job.ident}"
 
     @commands.add('t:')
-    async def wait(self, opts, *idents):
+    async def waitjobs(self, opts, *idents):
         jobs = {
             job.wait_done(): job
             for ident in idents
