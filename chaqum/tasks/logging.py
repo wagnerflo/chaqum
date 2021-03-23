@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 loglevel_map = {
-    'F': logging.CRITICAL,
     'C': logging.CRITICAL,
     'E': logging.ERROR,
     'W': logging.WARNING,
