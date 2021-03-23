@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+  <title>chaqum(1)</title>
+</head>
+<body>
+<table class="head">
+  <tr>
+    <td class="head-ltitle">chaqum(1)</td>
+    <td class="head-vol">General Commands Manual</td>
+    <td class="head-rtitle">chaqum(1)</td>
+  </tr>
+</table>
+<div class="manual-text">
+<h1 class="Sh" title="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<code class="Nm" title="Nm">chaqum</code> &#x2014;
+<div class="Nd" title="Nd">[&#x02C8;ke&#x026A;kju&#x02D0;m], the queue manager
+  for chaotic job queues</div>
+<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm" title="Nm">chaqum</code></td>
+    <td>[<div class="Op"><code class="Fl" title="Fl">-hv</code></div>]
+      [<div class="Op"><code class="Fl" title="Fl">-e</code>
+      <var class="Ar" title="Ar">ENTRY</var></div>]
+      [<div class="Op"><code class="Fl" title="Fl">-l</code>
+      <var class="Ar" title="Ar">LOG</var></div>]
+      <var class="Ar" title="Ar">DIRECTORY</var>
+      [<div class="Op"><var class="Ar" title="Ar">ARGUMENT ...</var></div>]</td>
+  </tr>
+</table>
+<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+Start a job manager with <var class="Ar" title="Ar">DIRECTORY</var> as its job
+  tree passing <var class="Ar" title="Ar">ARGUMENT ...</var> as commandline
+  parameters to the initial job script <var class="Ar" title="Ar">ENTRY</var>.
+  Then run the job manager as long as there are jobs running or repeats
+  registered or it receives <code class="Dv" title="Dv">SIGINT</code>,
+  <code class="Dv" title="Dv">SIGHUP</code> or
+  <code class="Dv" title="Dv">SIGTERM</code>.
+<div class="Pp"></div>
+The options are as follows:
+<dl class="Bl-tag">
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#h"><code class="Fl" title="Fl" id="h">-h</code></a></dt>
+  <dd>Show a help message and exit.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#v"><code class="Fl" title="Fl" id="v">-v</code></a></dt>
+  <dd>Turn on verbose logging. Can be repeated up to two times for even more
+      verbosity.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#e"><code class="Fl" title="Fl" id="e">-e</code></a>,
+    <code class="Fl" title="Fl">--entry</code>
+    <var class="Ar" title="Ar">ENTRY</var></dt>
+  <dd>Set the entry script to run as the first in the job tree. Defaults to
+      <code class="Dv" title="Dv">'entry'</code>.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#l"><code class="Fl" title="Fl" id="l">-l</code></a>,
+    <code class="Fl" title="Fl">--log</code>
+    <var class="Ar" title="Ar">LOG</var></dt>
+  <dd>Configure logging. Defaults to
+      <code class="Dv" title="Dv">'console'</code> which will log to stderr. Use
+      'syslog[:[APPNAME][:FACILITY]]' if you want log messages to be sent to
+      local Syslog. Anything else will be interpreted as the path to a JSON file
+      containing the Python
+      <code class="Fn" title="Fn">logging.config.dictConfig</code>()
+    format.</dd>
+</dl>
+<h1 class="Sh" title="Sh" id="JOB_TREES"><a class="permalink" href="#JOB_TREES">JOB
+  TREES</a></h1>
+Job trees are simply directory trees with at least one executable somewhere
+  inside. The only requirement for these executables is, that they either use
+  the <code class="Nm" title="Nm">chaqum</code> protocol to communicate with the
+  job manager (see <a class="Sx" title="Sx" href="#PROTOCOL">PROTOCOL</a> if
+  you're interested in the inner workings) or completly ignore file descriptors
+  3 and 4.
+<div class="Pp"></div>
+Having exclusivly executables of only the later type is unusual since such job
+  trees can't make use of <code class="Nm" title="Nm">chaqum's</code> job
+  management, process spawning and inter-process messaging.
+<div class="Pp"></div>
+Most commonly job excutables will be written in an interpreted language and use
+  one of the client libraries. References to those are in the
+  <a class="Sx" title="Sx" href="#SEE_ALSO">SEE ALSO</a> section.
+<div class="Pp"></div>
+The layout of the job tree directory as well as what exactly consitutes a single
+  job (and thus executable within that job tree) is completly up to the user.
+  There are simple examples demonstrating different features, available in the
+  projects
+  <a class="Lk" title="Lk" href="https://github.com/wagnerflo/chaqum/tree/main/examples">Git
+  Repository</a>.
+<h1 class="Sh" title="Sh" id="LOGGING"><a class="permalink" href="#LOGGING">LOGGING</a></h1>
+<code class="Nm" title="Nm">chaqum</code> captures everything the job processes
+  write to stdout and stderr and redirects it to its interal logging mechanism
+  (console, default local Syslog configuration or custom Python
+  <a class="Lk" title="Lk" href="https://docs.python.org/3/library/logging.config.html?highlight=logging#dictionary-schema-details">logging
+  configuration</a>; see <b class="Sy" title="Sy">-l</b> option). It generates
+  one log message per line of output.
+<div class="Pp"></div>
+By default messages are logged with log level
+  <a class="Lk" title="Lk" href="https://docs.python.org/3/library/logging.html#levels">INFO</a>,
+  but jobs can select the level by prepending the lines with one of
+<div class="Bd Bd-indent"><code class="Li">C&lt;US&gt;</code></div>
+<div class="Bd Bd-indent"><code class="Li">E&lt;US&gt;</code></div>
+<div class="Bd Bd-indent"><code class="Li">W&lt;US&gt;</code></div>
+<div class="Bd Bd-indent"><code class="Li">I&lt;US&gt;</code></div>
+<div class="Bd Bd-indent"><code class="Li">D&lt;US&gt;</code></div>
+<div class="Pp"></div>
+to log as level CRITICAL, ERROR, WARNING, INFO and DEBUG respectivly (in Syslog
+  terminology these are <code class="Dv" title="Dv">LOG_CRIT</code>,
+  <code class="Dv" title="Dv">LOG_ERR</code>,
+  <code class="Dv" title="Dv">LOG_WARNING</code>,
+  <code class="Dv" title="Dv">LOG_INFO</code> and
+  <code class="Dv" title="Dv">LOG_DEBUG</code> respectivly).
+  <code class="Dv" title="Dv">&lt;US&gt;</code> refers to the ASCII unit
+  seperator character a.k.a. decimal 31, hex 0x1F or octal 037.
+<div class="Pp"></div>
+The client libraries supply functions that make logging using this protocol
+  easy.
+<h1 class="Sh" title="Sh" id="PROTOCOL"><a class="permalink" href="#PROTOCOL">PROTOCOL</a></h1>
+To allow jobs to communicate with the job manager
+  <code class="Nm" title="Nm">chaqum</code> implements a simple line based
+  protocol. Communication is always initiated by the job; never by the server.
+  Commands are handled one after the other and always follow the flow of: Job
+  writes command to file descriptor 3, job reads managers reply by reading from
+  file descriptor 4.
+<h2 class="Ss" title="Ss" id="Adding_new_jobs_to_be_started"><a class="permalink" href="#Adding_new_jobs_to_be_started">Adding
+  new jobs to be started</a></h2>
+<div class="Bd Bd-indent">
+<pre class="Li">
+&gt; enqueue [-g GROUP] [-m MAXPROC] [-c MAXCPU] -- SCRIPT [ARGUMENT ...]&lt;LF&gt; 
+&lt; { S JOBIDENT&lt;LF&gt;, 
+    E&lt;LF&gt; }
+</pre>
+</div>
+<h2 class="Ss" title="Ss" id="Adding_new_repeats_to_the_scheduler"><a class="permalink" href="#Adding_new_repeats_to_the_scheduler">Adding
+  new repeats to the scheduler</a></h2>
+<div class="Bd Bd-indent">
+<pre class="Li">
+&gt; repeat [-c CRON] [-i INTERVAL] -- SCRIPT [ARGUMENT ...]&lt;LF&gt; 
+&lt; { S&lt;LF&gt;, 
+    E&lt;LF&gt; }
+</pre>
+</div>
+<h2 class="Ss" title="Ss" id="Waiting_for_jobs_to_finish_running"><a class="permalink" href="#Waiting_for_jobs_to_finish_running">Waiting
+  for jobs to finish running</a></h2>
+<div class="Bd Bd-indent">
+<pre class="Li">
+&gt; waitjobs [-t TIMEOUT] -- JOBIDENT [...]&lt;LF&gt; 
+&lt; { S&lt;LF&gt;, 
+    T JOBIDENT [...]&lt;LF&gt; 
+    E&lt;LF&gt; }
+</pre>
+</div>
+<h2 class="Ss" title="Ss" id="Queuing_a_inter_jobs_message_for_delivery"><a class="permalink" href="#Queuing_a_inter_jobs_message_for_delivery">Queuing
+  a inter-jobs message for delivery</a></h2>
+<div class="Bd Bd-indent">
+<pre class="Li">
+&gt; sendmsg -- JOBIDENT LENGTH&lt;LF&gt; 
+  BYTES&lt;LF&gt; 
+&lt; { S MSGIDENT&lt;LF&gt;, 
+    E&lt;LF&gt; }
+</pre>
+</div>
+<h2 class="Ss" title="Ss" id="Waiting_for_a_message_to_be_delivered"><a class="permalink" href="#Waiting_for_a_message_to_be_delivered">Waiting
+  for a message to be delivered</a></h2>
+<div class="Bd Bd-indent">
+<pre class="Li">
+&gt; waitrecv [-t TIMEOUT] -- MSGIDENT [...]&lt;LF&gt; 
+&lt; { S&lt;LF&gt;, 
+    T MSGIDENT [...]&lt;LF&gt; 
+    E&lt;LF&gt; }
+</pre>
+</div>
+<h2 class="Ss" title="Ss" id="Receiving_a_message"><a class="permalink" href="#Receiving_a_message">Receiving
+  a message</a></h2>
+<div class="Bd Bd-indent">
+<pre class="Li">
+&gt; recvmsg [-t TIMEOUT]&lt;LF&gt; 
+&lt; { S LENGTH&lt;LF&gt; 
+    BYTES&lt;LF&gt;, 
+    E&lt;LF&gt; }
+</pre>
+</div>
+<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+  ALSO</a></h1>
+<a class="Xr" title="Xr" href="chaqum.lib.3.html">chaqum.lib(3)</a> &#x2014;
+  Python job library,
+  <a class="Xr" title="Xr" href="Chaqum.3.html">Chaqum(3)</a> &#x2014; Perl job
+  library, <a class="Xr" title="Xr" href="chaqum.sh.3.html">chaqum.sh(3)</a>
+  &#x2014; POSIX shell job library.
+<h1 class="Sh" title="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>
+Written by Florian Wagner.</div>
+<table class="foot">
+  <tr>
+    <td class="foot-date">March 23, 2021</td>
+    <td class="foot-os">Debian</td>
+  </tr>
+</table>
+</body>
+</html>
