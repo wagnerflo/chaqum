@@ -155,7 +155,9 @@ def recvmsg(timeout=None):
         *() if timeout is None else ('-t', timeout),
     )
     status,length = _recv_response()
-    return pipe_rd.read(int(length))
+    data = pipe_rd.read(int(length))
+    pipe_rd.read(1)
+    return data
 
 def recvjson(timeout=None):
     return json.loads(recvmsg(timeout=timeout).decode('utf8'))

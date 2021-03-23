@@ -4,3 +4,4 @@ from chaqum.lib import *
 
 log.info('Waiting for message')
 log.info(recvjson())
+log.info(recvjson())

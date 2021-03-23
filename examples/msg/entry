@@ -10,3 +10,5 @@ msg = job.sendjson({'hello': 'wörld', 'newline': '\n'})
 
 log.info('Waiting for message to be delivered')
 msg.waitrecv()
+
+job.sendjson({'hello': 'wörld', 'newline': '\n'})
