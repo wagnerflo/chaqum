@@ -43,16 +43,120 @@ want log messages to be sent to local Syslog. Anything else will be
 interpreted as the path to a JSON file containing the Python
 .Fn logging.config.dictConfig
 format.
+.El
+.Sh JOB TREES
+Job trees are simply directory trees with at least one executable
+somewhere inside. The only requirement for these executables is, that
+they either use the
+.Nm chaqum
+protocol to communicate with the job manager (see
+.Sx PROTOCOL
+if you're interested in the inner workings) or completly ignore file
+descriptors 3 and 4.
+.Pp
+Having exclusivly executables of only the later type is unusual since
+such job trees can't make use of
+.Nm chaqum's
+job management, process spawning and inter-process messaging.
+.Pp
+Most commonly job excutables will be written in an interpreted language
+and use one of the client libraries. References to those are in the
+.Sx SEE ALSO
+section.
+.Pp
+The layout of the job tree directory as well as what exactly consitutes
+a single job (and thus executable within that job tree) is completly
+up to the user. There are simple examples demonstrating different
+features, available in the projects
+.Lk https://github.com/wagnerflo/chaqum/tree/main/examples Git Repository .
+.Sh LOGGING
+.Nm chaqum
+captures everything the job processes write to stdout and stderr and
+redirects it to its interal logging mechanism (console, default local
+Syslog configuration or custom Python
+.Lk https://docs.python.org/3/library/logging.config.html?highlight=logging#dictionary-schema-details "logging configuration" ;
+see
+.Sy -l
+option). It generates one log message per line of output.
+.Pp
+By default messages are logged with log level
+.Lk https://docs.python.org/3/library/logging.html#levels INFO ,
+but jobs can select the level by prepending the lines with one of
+.Dl C<US>
+.Dl E<US>
+.Dl W<US>
+.Dl I<US>
+.Dl D<US>
+.Pp
+to log as level CRITICAL, ERROR, WARNING, INFO and DEBUG respectivly
+(in Syslog terminology these are
+.Dv LOG_CRIT ,
+.Dv LOG_ERR ,
+.Dv LOG_WARNING ,
+.Dv LOG_INFO
+and
+.Dv LOG_DEBUG
+respectivly).
+.Dv <US>
+refers to the ASCII unit seperator character a.k.a. decimal 31, hex
+0x1F or octal 037.
+.Pp
+The client libraries supply functions that make logging using this
+protocol easy.
 .Sh PROTOCOL
 To allow jobs to communicate with the job manager
 .Nm chaqum
-implements a simple line based protocol.
+implements a simple line based protocol. Communication is always
+initiated by the job; never by the server. Commands are handled one
+after the other and always follow the flow of: Job writes command to
+file descriptor 3, job reads managers reply by reading from file
+descriptor 4.
+.Ss Adding new jobs to be started
+.Bd -literal -offset indent
+> enqueue [-g GROUP] [-m MAXPROC] [-c MAXCPU] -- SCRIPT [ARGUMENT ...]<LF>
+< { S JOBIDENT<LF>,
+    E<LF> }
+.Ed
+.Ss Adding new repeats to the scheduler
+.Bd -literal -offset indent
+> repeat [-c CRON] [-i INTERVAL] -- SCRIPT [ARGUMENT ...]<LF>
+< { S<LF>,
+    E<LF> }
+.Ed
+.Ss Waiting for jobs to finish running
+.Bd -literal -offset indent
+> waitjobs [-t TIMEOUT] -- JOBIDENT [...]<LF>
+< { S<LF>,
+    T JOBIDENT [...]<LF>
+    E<LF> }
+.Ed
+.Ss Queuing a inter-jobs message for delivery
+.Bd -literal -offset indent
+> sendmsg -- JOBIDENT LENGTH<LF>
+  BYTES<LF>
+< { S MSGIDENT<LF>,
+    E<LF> }
+.Ed
+.Ss Waiting for a message to be delivered
+.Bd -literal -offset indent
+> waitrecv [-t TIMEOUT] -- MSGIDENT [...]<LF>
+< { S<LF>,
+    T MSGIDENT [...]<LF>
+    E<LF> }
+.Ed
+.Ss Receiving a message
+.Bd -literal -offset indent
+> recvmsg [-t TIMEOUT]<LF>
+< { S LENGTH<LF>
+    BYTES<LF>,
+    E<LF> }
+.Ed
 .Sh SEE ALSO
 .Xr chaqum.lib 3
 \(em Python job library,
 .Xr Chaqum 3
 \(em Perl job library,
-chaqum.sh 3
+.Xr chaqum.sh 3
 \(em POSIX shell job library.
 .Sh COPYRIGHT
 Written by Florian Wagner.

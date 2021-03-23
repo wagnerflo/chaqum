@@ -12,17 +12,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.3.1
 
-      - name: Install mandoc
-        run: sudo apt-get install mandoc
+      - name: Install mandoc, make
+        run: sudo apt-get install mandoc make
 
-      - name: Create directory
-        run: mkdir build
-
-      - name: Convert to HTML
-        run:  mandoc -mdoc -T html -O man=%N.%S.html,style=https://wagnerflo.github.io/chaqum/mandoc.css man/chaqum.1 > build/chaqum.1.html
-
-      - name: Copy CSS
-        run: cp -f man/mandoc.css build
+      - name: Build man pages
+        run:  make -C man DESTDIR=$(pwd)/build
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@4.1.0

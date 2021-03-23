@@ -3,3 +3,4 @@ __pycache__/
 !.pyenv/.keep
 chaqum.egg-info/
 dist/
+man/*.html
