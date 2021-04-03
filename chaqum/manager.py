@@ -12,6 +12,9 @@ from .dataclasses import (
     GroupConfig,
     Message,
 )
+from .flowcontrolmixin import (
+    FlowControlMixin,
+)
 from .tasks import (
     CommandTask,
     LoggingTask,
@@ -198,7 +201,7 @@ class Manager:
             )
             wr = asyncio.StreamWriter(
                 *await self._loop.connect_write_pipe(
-                    lambda: asyncio.streams.FlowControlMixin(loop=self._loop),
+                    lambda: FlowControlMixin(loop=self._loop),
                     open(wr_fd, 'wb', 0),
                 ),
                 None, self._loop
