@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup,find_packages
 from pathlib import Path
 
 setup(
@@ -6,7 +6,7 @@ setup(
     description="[ˈkeɪkjuːm], the queue manager for chaotic job queues.",
     long_description=(Path(__file__).parent / "README.md").read_text(),
     long_description_content_type="text/markdown",
-    version="0.2",
+    version="0.3",
     author="Florian Wagner",
     author_email="florian@wagner-flo.net",
     url="https://github.com/wagnerflo/chaqum",
@@ -27,7 +27,10 @@ setup(
         "noblklog >= 0.3",
         "psutil",
     ],
-    packages=["chaqum"],
+    packages=find_packages(
+        where = ".",
+        include = ["chaqum.*"],
+    ),
     entry_points = {
         "console_scripts": [
             "chaqum=chaqum.cmdline:main",
