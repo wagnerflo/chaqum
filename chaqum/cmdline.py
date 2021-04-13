@@ -174,11 +174,11 @@ def main():
         log = logging.getLogger(prog)
 
     except Exception as exc:
-        print(f"{prog}: {exc}", file=stderr, flush=True)
+        print(f"{prog}: {exc.__cause__ or exc}", file=stderr, flush=True)
         return 1
 
     except OSError as exc:
-        print(f"{prog}: {exc}", file=stderr, flush=True)
+        print(f"{prog}: {exc.__cause__ or exc}", file=stderr, flush=True)
         return exc.errno
 
     except KeyboardInterrupt:
