@@ -10,7 +10,7 @@ except Exception:
     _MAXFD = 2048
 
 def path_exists(path):
-    path = Path(path)
+    path = Path(path).resolve()
     if not path.exists():
         raise FileNotFoundError(
             ENOENT, f"{strerror(ENOENT)}: '{path}'"
@@ -18,7 +18,7 @@ def path_exists(path):
     return path
 
 def path_is_dir(path):
-    path = Path(path)
+    path = Path(path).resolve()
     path_exists(path)
     if not path.is_dir():
         raise OSError(
@@ -27,7 +27,7 @@ def path_is_dir(path):
     return path
 
 def path_is_file(path):
-    path = Path(path)
+    path = Path(path).resolve()
     path_exists(path)
     if not path.is_file():
         raise OSError(
@@ -36,7 +36,7 @@ def path_is_file(path):
     return path
 
 def path_is_executable(path):
-    path = Path(path)
+    path = Path(path).resolve()
     if not access(path, X_OK):
         raise OSError(
             EACCES, f"{strerror(EACCES)}: '{path}'"
