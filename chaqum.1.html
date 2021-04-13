@@ -44,13 +44,12 @@ The options are as follows:
 <dl class="Bl-tag">
   <dt>&#x00A0;</dt>
   <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#h"><code class="Fl" title="Fl" id="h">-h</code></a></dt>
-  <dd>Show a help message and exit.</dd>
-  <dt>&#x00A0;</dt>
-  <dd>&#x00A0;</dd>
-  <dt><a class="permalink" href="#v"><code class="Fl" title="Fl" id="v">-v</code></a></dt>
-  <dd>Turn on verbose logging. Can be repeated up to two times for even more
-      verbosity.</dd>
+  <dt><a class="permalink" href="#d"><code class="Fl" title="Fl" id="d">-d</code></a>,
+    <code class="Fl" title="Fl">--daemonize</code>
+    <var class="Ar" title="Ar">PIDFILE[:USER:GROUP]</var></dt>
+  <dd>Daemonize job manager. Use PIDFILE as lockfile to ensure only one instance
+      is running. If USER and GROUP are specified run job manager under these
+      credentials (this usually requires you to be root).</dd>
   <dt>&#x00A0;</dt>
   <dd>&#x00A0;</dd>
   <dt><a class="permalink" href="#e"><code class="Fl" title="Fl" id="e">-e</code></a>,
@@ -60,16 +59,27 @@ The options are as follows:
       <code class="Dv" title="Dv">'entry'</code>.</dd>
   <dt>&#x00A0;</dt>
   <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#h"><code class="Fl" title="Fl" id="h">-h</code></a></dt>
+  <dd>Show a help message and exit.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
   <dt><a class="permalink" href="#l"><code class="Fl" title="Fl" id="l">-l</code></a>,
     <code class="Fl" title="Fl">--log</code>
     <var class="Ar" title="Ar">LOG</var></dt>
-  <dd>Configure logging. Defaults to
-      <code class="Dv" title="Dv">'console'</code> which will log to stderr. Use
-      'syslog[:[APPNAME][:FACILITY]]' if you want log messages to be sent to
-      local Syslog. Anything else will be interpreted as the path to a JSON file
-      containing the Python
-      <code class="Fn" title="Fn">logging.config.dictConfig</code>()
-    format.</dd>
+  <dd>Configure logging. Can be one of
+      <code class="Dv" title="Dv">'console'</code> or
+      <code class="Dv" title="Dv">'syslog[:[APPNAME][:FACILITY]]'</code> to
+      install sane defaults for logging to stderr or local Syslog respectivly.
+      Otherwise the setting will be interpreted as the path to a JSON file
+      containing the
+      <code class="Fn" title="Fn">logging.config.dictConfig</code>() format.
+      Defaults to <code class="Dv" title="Dv">'syslog'</code> if running as a
+      daemon <code class="Dv" title="Dv">'console'</code> otherwise.</dd>
+  <dt>&#x00A0;</dt>
+  <dd>&#x00A0;</dd>
+  <dt><a class="permalink" href="#v"><code class="Fl" title="Fl" id="v">-v</code></a></dt>
+  <dd>Turn on verbose logging. Can be repeated up to two times for even more
+      verbosity.</dd>
 </dl>
 <h1 class="Sh" title="Sh" id="JOB_TREES"><a class="permalink" href="#JOB_TREES">JOB
   TREES</a></h1>
@@ -198,7 +208,7 @@ To allow jobs to communicate with the job manager
 Written by Florian Wagner.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">March 23, 2021</td>
+    <td class="foot-date">April 13, 2021</td>
     <td class="foot-os">Debian</td>
   </tr>
 </table>
