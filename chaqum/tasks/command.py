@@ -8,14 +8,14 @@ from apscheduler.triggers.interval import IntervalTrigger
 from ..dataclasses import GroupConfig
 
 _RE_INTERVAL = re.compile(
-    r'''
+    r"""
         ^
         (?P<seconds>\d+)s |
         (?P<minutes>\d+)m |
         (?P<hours>\d+)h   |
         (?P<days>\d+)d    |
         (?P<weeks>\d+)w
-    ''', re.X
+    """, re.X
 )
 
 def parse_interval(interval):
@@ -23,7 +23,7 @@ def parse_interval(interval):
     while interval:
         match = _RE_INTERVAL.match(interval)
         if match is None:
-            raise Exception('Invalid interval specifier.')
+            raise Exception("Invalid interval specifier.")
         kws.update(
             (k,int(v)) for k,v in match.groupdict().items()
             if v is not None
@@ -50,7 +50,7 @@ def parse_cron(cron):
         )
         return CronTrigger(**kws)
 
-    raise Exception('Invalid cron specifier.')
+    raise Exception("Invalid cron specifier.")
 
 def opt_to_value(opts, opt, conv):
     try:
@@ -70,7 +70,7 @@ def opts_to_keywords(opts, **kws):
     }
 
 class CommandRegistry(dict):
-    def add(self, optstr=''):
+    def add(self, optstr=""):
         def decorator(func):
             func.optstring = optstr
             self[func.__name__] = func
@@ -94,7 +94,7 @@ class CommandTask:
     async def _run(self):
         try:
             while line := (await self.rd.readline()).decode().strip():
-                reply = 'E'
+                reply = "E"
                 func = None
                 opts = None
 
@@ -119,7 +119,7 @@ class CommandTask:
                         self.job.log.error(f"{cmd}: {exc}", exc_info=True)
 
                 if isinstance(reply, str):
-                    reply = (reply.encode(), b'\n')
+                    reply = (reply.encode(), b"\n")
 
                 self.wr.writelines(reply)
                 await self.wr.drain()
@@ -127,36 +127,36 @@ class CommandTask:
         except asyncio.CancelledError:
             pass
 
-    @commands.add('i:c:')
+    @commands.add("i:c:")
     async def repeat(self, opts, script, *args):
-        if interval := opts.get('-i'):
+        if interval := opts.get("-i"):
             trigger = parse_interval(interval)
 
-        elif cron := opts.get('-c'):
+        elif cron := opts.get("-c"):
             trigger = parse_cron(cron)
 
         else:
-            raise Exception('Missing repetition specifier (-i/-c).')
+            raise Exception("Missing repetition specifier (-i/-c).")
 
         self.manager.register_repeat(script, args, trigger)
 
-        return 'S'
+        return "S"
 
-    @commands.add('g:m:c:')
+    @commands.add("g:m:c:")
     async def enqueue(self, opts, script, *args):
         kws = dict(
             script = script,
             args = args,
         )
 
-        if '-g' in opts:
+        if "-g" in opts:
             kws.update(
                 group = GroupConfig(
                     **opts_to_keywords(
                         opts,
-                        ident    = ('-g', str),
-                        max_jobs = ('-m', int),
-                        max_cpu  = ('-c', float),
+                        ident    = ("-g", str),
+                        max_jobs = ("-m", int),
+                        max_cpu  = ("-c", float),
                     )
                 ),
             )
@@ -165,7 +165,7 @@ class CommandTask:
 
         return f"S {job.ident}"
 
-    @commands.add('t:')
+    @commands.add("t:")
     async def waitjobs(self, opts, *idents):
         jobs = {
             job.wait_done(): job
@@ -175,11 +175,11 @@ class CommandTask:
 
         _,pending = await asyncio.wait(
             jobs.keys(),
-            timeout=opt_to_value(opts, '-t', float),
+            timeout=opt_to_value(opts, "-t", float),
         )
 
-        return ' '.join(
-            ['T' if pending else 'S'] +
+        return " ".join(
+            ["T" if pending else "S"] +
             [jobs[fut].ident for fut in pending]
         )
 
@@ -196,7 +196,7 @@ class CommandTask:
 
         return f"S {msg.ident}"
 
-    @commands.add('t:')
+    @commands.add("t:")
     async def waitrecv(self, opts, *idents):
         messages = {
             msg.delivered: msg
@@ -206,29 +206,29 @@ class CommandTask:
 
         _,pending = await asyncio.wait(
             messages.keys(),
-            timeout=opt_to_value(opts, '-t', float),
+            timeout=opt_to_value(opts, "-t", float),
         )
 
-        return ' '.join(
-            ['T' if pending else 'S'] +
+        return " ".join(
+            ["T" if pending else "S"] +
             [messages[fut].ident for fut in pending]
         )
 
-    @commands.add('t:')
+    @commands.add("t:")
     async def recvmsg(self, opts):
         fut = self.job.collect_message()
         _,pending = await asyncio.wait(
             [fut],
-            timeout=opt_to_value(opts, '-t', float),
+            timeout=opt_to_value(opts, "-t", float),
         )
         if pending:
-            return 'T'
+            return "T"
 
         msg = fut.result()
         self.manager.forget_message(msg)
 
         return (
-            f"S {len(msg.data)}\n".encode('ascii'),
+            f"S {len(msg.data)}\n".encode("ascii"),
             msg.data,
             b"\n",
         )

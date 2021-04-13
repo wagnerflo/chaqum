@@ -8,7 +8,7 @@ from psutil import cpu_percent
 
 from .util import run_once
 
-log = getLogger('chaqum.job')
+log = getLogger("chaqum.job")
 
 class JobState(Enum):
     INIT     = 1
@@ -147,7 +147,7 @@ class Group(dict):
             return
 
         job.set_waiting()
-        log = run_once(job.log.info, 'Waiting for slot.')
+        log = run_once(job.log.info, "Waiting for slot.")
 
         try:
             precursor = self._queue[-1]

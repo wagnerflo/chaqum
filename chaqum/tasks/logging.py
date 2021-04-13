@@ -2,10 +2,10 @@ import asyncio
 import logging
 
 loglevel_map = {
-    'C': logging.CRITICAL,
-    'E': logging.ERROR,
-    'W': logging.WARNING,
-    'D': logging.DEBUG,
+    "C": logging.CRITICAL,
+    "E": logging.ERROR,
+    "W": logging.WARNING,
+    "D": logging.DEBUG,
 }
 
 class LoggingTask:
@@ -23,7 +23,7 @@ class LoggingTask:
             while line := await self.rd.readline():
                 line = line.decode().rstrip()
 
-                if len(line) > 1 and line[1] == '\x1f':
+                if len(line) > 1 and line[1] == "\x1f":
                     lvl = loglevel_map.get(line[0], logging.INFO)
                     line = line[2:]
                 else:

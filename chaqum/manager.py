@@ -27,10 +27,10 @@ from .util import (
     MAXFD,
 )
 
-log = logging.getLogger('chaqum.manager')
+log = logging.getLogger("chaqum.manager")
 
 class Manager:
-    def __init__(self, path, entry_script_name='entry'):
+    def __init__(self, path, entry_script_name="entry"):
         self._path = path_is_dir(path)
         self._entry_script_name = entry_script_name
         self._reset()
@@ -57,7 +57,7 @@ class Manager:
 
     async def run(self, *entry_args):
         if self._done is not None:
-            raise Exception(f'{self} already running')
+            raise Exception(f"{self} already running")
 
         self._loop = asyncio.get_running_loop()
         self._jobs = {}
@@ -76,7 +76,7 @@ class Manager:
             EVENT_JOB_REMOVED | EVENT_ALL_JOBS_REMOVED
         )
 
-        log.info('Job manager starting.')
+        log.info("Job manager starting.")
 
         # start the scheduler, wait for the entry job to complete and
         # then until done
@@ -91,13 +91,13 @@ class Manager:
         await entry.wait_done()
         await self._done
 
-        log.debug('Job manager shutting down.')
+        log.debug("Job manager shutting down.")
 
         # cleanup
         self._sched.shutdown(wait=False)
         self._reset()
 
-        log.debug('Job manager stopped.')
+        log.debug("Job manager stopped.")
 
     def _reset(self):
         self._loop = None
@@ -136,7 +136,7 @@ class Manager:
         self._check_script(script)
 
         if ident is None:
-            ident = f'{script}/{next(self._pid)}'
+            ident = f"{script}/{next(self._pid)}"
 
         # get or create group
         if (grp := self._groups.get(group.ident)) is None:
@@ -176,7 +176,7 @@ class Manager:
                 os.dup2(child_rd_fd, 4)
                 os.closerange(5, MAXFD)
 
-            job.log.info('Starting job.')
+            job.log.info("Starting job.")
 
             # spawn child
             proc = await asyncio.create_subprocess_exec(
@@ -197,12 +197,12 @@ class Manager:
             rd = asyncio.StreamReader(loop=self._loop)
             await self._loop.connect_read_pipe(
                 lambda: asyncio.StreamReaderProtocol(rd, loop=self._loop),
-                open(rd_fd, 'rb', 0),
+                open(rd_fd, "rb", 0),
             )
             wr = asyncio.StreamWriter(
                 *await self._loop.connect_write_pipe(
                     lambda: FlowControlMixin(loop=self._loop),
-                    open(wr_fd, 'wb', 0),
+                    open(wr_fd, "wb", 0),
                 ),
                 None, self._loop
             )
@@ -217,7 +217,7 @@ class Manager:
             await logtask
             await cmdtask
 
-            job.log.info('Job completed.')
+            job.log.info("Job completed.")
 
         except asyncio.CancelledError:
             if proc is not None:

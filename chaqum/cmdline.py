@@ -11,11 +11,11 @@ def main():
     from .manager import Manager
     from .util import path_is_file
 
-    prog = 'chaqum'
+    prog = "chaqum"
     parser = ArgumentParser(prog=prog)
     parser.add_argument(
-        '-v', '--verbose',
-        action='count',
+        "-v", "--verbose",
+        action="count",
         default=0,
         help=(
             "Turn on verbose logging. Can be repeated up to two times "
@@ -23,8 +23,8 @@ def main():
         )
     )
     parser.add_argument(
-        '-l', '--log',
-        default='console',
+        "-l", "--log",
+        default="console",
         help=(
             "Can be one of 'console' (the default if this option is "
             "not given) or 'syslog[:[APPNAME][:FACILITY]]' to install "
@@ -35,16 +35,16 @@ def main():
         )
     )
     parser.add_argument(
-        '-e', '--entry',
-        default='entry',
+        "-e", "--entry",
+        default="entry",
         help=(
             "Set the entry script to run as the first in the job tree. "
             "Defaults to 'entry'."
         )
     )
     parser.add_argument(
-        'directory',
-        metavar='DIRECTORY',
+        "directory",
+        metavar="DIRECTORY",
         help=(
             "Path to the job tree. Needs to be a directory containing "
             "at least a executable file called 'entry' (or what -e is "
@@ -52,9 +52,9 @@ def main():
         )
     )
     parser.add_argument(
-        'arguments',
-        metavar='ARGUMENT',
-        nargs='*',
+        "arguments",
+        metavar="ARGUMENT",
+        nargs="*",
         help=(
             "Arguments passed on to the 'entry'/-e job."
         )
@@ -74,16 +74,16 @@ def main():
         appname = None
         facility = None
 
-        if args.log.startswith('syslog'):
-            args.log,_,appname = args.log.partition(':')
-            appname,_,facility = appname.partition(':')
+        if args.log.startswith("syslog"):
+            args.log,_,appname = args.log.partition(":")
+            appname,_,facility = appname.partition(":")
 
-        if args.log in ('console', 'syslog'):
-            PACKAGE_NAME,_,_ = __name__.rpartition('.')
+        if args.log in ("console", "syslog"):
+            PACKAGE_NAME,_,_ = __name__.rpartition(".")
             fp = resource_stream(PACKAGE_NAME, f"logging.{args.log}.json")
 
         else:
-            fp = path_is_file(args.log).open('rb')
+            fp = path_is_file(args.log).open("rb")
 
         with fp:
             cfg = json.load(fp)
@@ -104,7 +104,7 @@ def main():
             ),
             syslog = dict(
                 appname = appname or prog,
-                facility = facility or 'daemon',
+                facility = facility or "daemon",
             ),
         )
 
