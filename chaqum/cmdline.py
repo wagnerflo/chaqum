@@ -5,11 +5,19 @@ def main():
     import logging.config
 
     from argparse import ArgumentParser
+    from daemon import DaemonContext
+    from daemon.pidfile import TimeoutPIDLockFile
     from pkg_resources import resource_stream
-    from sys import stderr
+    from sys import stdin,stdout,stderr
 
     from .manager import Manager
-    from .util import path_is_file
+    from .util import (
+        path_is_file,
+        path_is_missing,
+        get_max_open_fd,
+        uid_or_user,
+        gid_or_group,
+    )
 
     prog = "chaqum"
     parser = ArgumentParser(prog=prog)
@@ -24,14 +32,24 @@ def main():
     )
     parser.add_argument(
         "-l", "--log",
-        default="console",
+        default=None,
         help=(
-            "Can be one of 'console' (the default if this option is "
-            "not given) or 'syslog[:[APPNAME][:FACILITY]]' to install "
-            "sane defaults for logging to stderr or local Syslog "
-            "respectivly. Otherwise the setting will be interpreted as "
-            "a path to a JSON file containing the "
-            "Python logging.config.dictConfig format."
+            "Configure logging. Can be one of 'console' or "
+            "'syslog[:[APPNAME][:FACILITY]]' to install sane defaults "
+            "for logging to stderr or local Syslog respectivly. "
+            "Otherwise the setting will be interpreted as the path to "
+            "a JSON file containing the logging.config.dictConfig "
+            "format. Defaults to 'syslog' if running as a daemon, "
+            "'console' otherwise."
+        )
+    )
+    parser.add_argument(
+        "-d", "--daemonize", metavar="PIDFILE[:USER:GROUP]",
+        help=(
+            "Daemonize job manager. Use PIDFILE as lockfile to ensure "
+            "only one instance is running. If USER and GROUP are "
+            "specified run job manager under these credentials (this "
+            "usually requires you to be root)."
         )
     )
     parser.add_argument(
@@ -71,6 +89,9 @@ def main():
         )
 
         # configure logging
+        if args.log is None:
+            args.log = "syslog" if args.daemonize else "console"
+
         appname = None
         facility = None
 
@@ -108,10 +129,49 @@ def main():
             ),
         )
 
+        # set up logging now so any error in the logging configuration
+        # end up on stderr before daemonizing
         logging.config.dictConfig(cfg)
 
-        # start the job mananger
-        asyncio.run(mgr.run(*args.arguments))
+        # set up a python-daemon context manager, that daemonizes us if
+        # so requested
+        pidfile = None
+        uid = None
+        gid = None
+        daemon_stdin = None
+        daemon_stdout = None
+        daemon_stderr = None
+
+        if args.daemonize:
+            pidfile,sep,creds = args.daemonize.partition(":")
+            pidfile = TimeoutPIDLockFile(path_is_missing(pidfile))
+            if sep:
+                uid,_,gid = creds.partition(":")
+                if not uid or not gid:
+                    raise Exception(f"Credentials '{creds}' invalid.")
+                uid = uid_or_user(uid)
+                gid = gid_or_group(gid)
+        else:
+            daemon_stdin = stdin
+            daemon_stdout = stdout
+            daemon_stderr = stderr
+
+        ctx = DaemonContext(
+            # we need to make sure any file descriptors opened by logging
+            # handlers will not be closed
+            files_preserve = list(range(3, get_max_open_fd() + 1)),
+            # the boring rest
+            detach_process = bool(args.daemonize),
+            pidfile = pidfile,
+            uid = uid,
+            gid = gid,
+            stdin = daemon_stdin,
+            stdout = daemon_stdout,
+            stderr = daemon_stderr,
+        )
+
+        # get a logger to use for exceptions
+        log = logging.getLogger(prog)
 
     except Exception as exc:
         print(f"{prog}: {exc}", file=stderr, flush=True)
@@ -119,6 +179,21 @@ def main():
 
     except OSError as exc:
         print(f"{prog}: {exc}", file=stderr, flush=True)
+        return exc.errno
+
+    except KeyboardInterrupt:
+        print(file=stderr)
+
+    try:
+        with ctx:
+            asyncio.run(mgr.run(*args.arguments))
+
+    except Exception as exc:
+        log.critical("Unhandled exception.", exc_info=True)
+        return 1
+
+    except OSError as exc:
+        log.critical("Unhandled exception.", exc_info=True)
         return exc.errno
 
     except KeyboardInterrupt:

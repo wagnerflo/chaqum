@@ -1,4 +1,4 @@
-.Dd March 23, 2021
+.Dd April 13, 2021
 .Dt chaqum 1
 .Os
 .Sh NAME
@@ -27,22 +27,32 @@ or
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl h
-Show a help message and exit.
-.It Fl v
-Turn on verbose logging. Can be repeated up to two times for even more
-verbosity.
+.It Fl d , \-daemonize Ar PIDFILE[:USER:GROUP]
+Daemonize job manager. Use PIDFILE as lockfile to ensure only one
+instance is running. If USER and GROUP are specified run job manager
+under these credentials (this usually requires you to be root).
 .It Fl e , \-entry Ar ENTRY
 Set the entry script to run as the first in the job tree. Defaults to
 .Dv 'entry' .
+.It Fl h
+Show a help message and exit.
 .It Fl l , \-log Ar LOG
-Configure logging. Defaults to
+Configure logging. Can be one of
 .Dv 'console'
-which will log to stderr. Use 'syslog[:[APPNAME][:FACILITY]]' if you
-want log messages to be sent to local Syslog. Anything else will be
-interpreted as the path to a JSON file containing the Python
+or
+.Dv 'syslog[:[APPNAME][:FACILITY]]'
+to install sane defaults for logging to stderr or local Syslog
+respectivly. Otherwise the setting will be interpreted as the path to
+a JSON file containing the
 .Fn logging.config.dictConfig
-format.
+format. Defaults to
+.Dv 'syslog'
+if running as a daemon
+.Dv 'console'
+otherwise.
+.It Fl v
+Turn on verbose logging. Can be repeated up to two times for even more
+verbosity.
 .El
 .Sh JOB TREES
 Job trees are simply directory trees with at least one executable

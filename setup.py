@@ -23,6 +23,7 @@ setup(
     python_requires=">= 3.8",
     install_requires=[
         "APScheduler >= 3.0, < 4.0",
+        "python-daemon >= 2.0.6",
         "noblklog >= 0.3",
         "psutil",
     ],
