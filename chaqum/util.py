@@ -2,11 +2,12 @@ from errno import ENOENT,ENOTDIR,EACCES
 from functools import wraps
 from os import access,strerror,sysconf,X_OK
 from pathlib import Path
+from resource import getrlimit,RLIMIT_NOFILE,RLIM_INFINITY
 
 try:
-    MAXFD = sysconf('SC_OPEN_MAX')
+    _MAXFD = sysconf("SC_OPEN_MAX")
 except Exception:
-    MAXFD = 256
+    _MAXFD = 2048
 
 def path_exists(path):
     path = Path(path)
@@ -51,3 +52,9 @@ def run_once(func, *args, **kws):
             once = True
             return func(*args, **kws)
     return wrapper
+
+def get_max_fd():
+    (__, hard_limit) = getrlimit(RLIMIT_NOFILE)
+    if hard_limit == RLIM_INFINITY:
+        return _MAXFD
+    return hard_limit

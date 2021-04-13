@@ -24,7 +24,7 @@ from .util import (
     path_is_file,
     path_is_dir,
     path_is_executable,
-    MAXFD,
+    get_max_fd,
 )
 
 log = logging.getLogger("chaqum.manager")
@@ -174,7 +174,7 @@ class Manager:
             def preexec_fn():
                 os.dup2(child_wr_fd, 3)
                 os.dup2(child_rd_fd, 4)
-                os.closerange(5, MAXFD)
+                os.closerange(5, get_max_fd())
 
             job.log.info("Starting job.")
 
