@@ -12,35 +12,27 @@ except Exception:
 def path_exists(path):
     path = Path(path).resolve()
     if not path.exists():
-        raise FileNotFoundError(
-            ENOENT, f"{strerror(ENOENT)}: '{path}'"
-        )
+        raise FileNotFoundError(ENOENT, f"{strerror(ENOENT)}: '{path}'")
     return path
 
 def path_is_dir(path):
     path = Path(path).resolve()
     path_exists(path)
     if not path.is_dir():
-        raise OSError(
-            ENOTDIR, f"{strerror(ENOTDIR)}: '{path}'"
-        )
+        raise OSError(ENOTDIR, f"{strerror(ENOTDIR)}: '{path}'")
     return path
 
 def path_is_file(path):
     path = Path(path).resolve()
     path_exists(path)
     if not path.is_file():
-        raise OSError(
-            ENOENT, f"Not a file: '{path}'"
-        )
+        raise OSError(ENOENT, f"Not a file: '{path}'")
     return path
 
 def path_is_executable(path):
     path = Path(path).resolve()
     if not access(path, X_OK):
-        raise OSError(
-            EACCES, f"{strerror(EACCES)}: '{path}'"
-        )
+        raise OSError(EACCES, f"{strerror(EACCES)}: '{path}'")
     return path
 
 def run_once(func, *args, **kws):
@@ -54,7 +46,7 @@ def run_once(func, *args, **kws):
     return wrapper
 
 def get_max_fd():
-    (__, hard_limit) = getrlimit(RLIMIT_NOFILE)
+    _,hard_limit = getrlimit(RLIMIT_NOFILE)
     if hard_limit == RLIM_INFINITY:
         return _MAXFD
     return hard_limit
