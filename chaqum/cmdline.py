@@ -14,7 +14,7 @@ def main():
     from .util import (
         path_is_file,
         path_is_missing,
-        get_max_open_fd,
+        get_open_fds,
         uid_or_user,
         gid_or_group,
     )
@@ -159,7 +159,7 @@ def main():
         ctx = DaemonContext(
             # we need to make sure any file descriptors opened by logging
             # handlers will not be closed
-            files_preserve = list(range(3, get_max_open_fd() + 1)),
+            files_preserve = list(get_open_fds().difference((0, 1, 2))),
             # the boring rest
             detach_process = bool(args.daemonize),
             pidfile = pidfile,

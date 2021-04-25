@@ -2,10 +2,12 @@ from collections import deque
 from errno import EACCES,EBADF,EEXIST,ENOENT,ENOTDIR
 from functools import wraps
 from grp import getgrnam
-from os import access,close,dup,strerror,sysconf,X_OK
+from os import access,close,dup,getpid,strerror,sysconf,X_OK
 from pathlib import Path
+from platform import system as operating_system
 from pwd import getpwnam
 from resource import getrlimit,RLIMIT_NOFILE,RLIM_INFINITY
+from subprocess import Popen,PIPE,DEVNULL
 
 try:
     _MAXFD = sysconf("SC_OPEN_MAX")
@@ -77,6 +79,39 @@ def get_max_open_fd():
         except OSError as exc:
             if exc.errno != EBADF:
                 raise
+
+def get_open_fds_dumb():
+    return set(range(get_max_open_fd() + 1))
+
+if operating_system() == "FreeBSD":
+    def get_open_fds():
+        try:
+            res = set()
+            proc = Popen(
+                ("/usr/bin/procstat", "-f", str(getpid())),
+                stdout=PIPE, stderr=DEVNULL,
+                universal_newlines=True
+            )
+
+            # verify header
+            assert next(proc.stdout).split()[2] == "FD"
+
+            # parse output
+            for line in proc.stdout:
+                try:
+                    res.add(int(line.split()[2]))
+                except (IndexError,ValueError):
+                    pass
+
+            # remove the fd of the pipe used by Popen
+            res.remove(proc.stdout.fileno())
+            return res
+
+        except:
+            return get_open_fds_dumb()
+
+else:
+    get_open_fds = get_open_fds_dumb
 
 def uid_or_user(uid):
     try:
