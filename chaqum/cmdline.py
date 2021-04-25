@@ -79,6 +79,7 @@ def main():
     )
 
     args = parser.parse_args()
+    loop = asyncio.get_event_loop()
 
     try:
         # create the job manager; constructur runs sanity checks for
@@ -186,7 +187,7 @@ def main():
 
     try:
         with ctx:
-            asyncio.run(mgr.run(*args.arguments))
+            loop.run_until_complete(mgr.run(*args.arguments))
 
     except Exception as exc:
         log.critical("Unhandled exception.", exc_info=True)

@@ -105,6 +105,7 @@ if operating_system() == "FreeBSD":
 
             # remove the fd of the pipe used by Popen
             res.remove(proc.stdout.fileno())
+            proc.stdout.close()
             return res
 
         except:
