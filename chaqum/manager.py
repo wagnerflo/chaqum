@@ -24,6 +24,7 @@ from .util import (
     path_is_file,
     path_is_dir,
     path_is_executable,
+    move_fd_above,
     get_max_fd,
 )
 
@@ -170,6 +171,11 @@ class Manager:
             # prepare command pipes
             rd_fd, child_wr_fd = os.pipe()
             child_rd_fd, wr_fd = os.pipe()
+
+            # make sure that the child ends of the pipes lie above fd 4
+            # so that preexec_fn can simply dup2 them without worry
+            child_wr_fd = move_fd_above(4, child_wr_fd)
+            child_rd_fd = move_fd_above(4, child_rd_fd)
 
             def preexec_fn():
                 os.dup2(child_wr_fd, 3)

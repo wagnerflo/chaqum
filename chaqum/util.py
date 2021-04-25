@@ -1,3 +1,4 @@
+from collections import deque
 from errno import EACCES,EBADF,EEXIST,ENOENT,ENOTDIR
 from functools import wraps
 from grp import getgrnam
@@ -52,6 +53,15 @@ def run_once(func, *args, **kws):
             once = True
             return func(*args, **kws)
     return wrapper
+
+def move_fd_above(tgt, fd):
+    to_close = deque()
+    while fd <= tgt:
+        to_close.append(fd)
+        fd = dup(fd)
+    for c in to_close:
+        close(c)
+    return fd
 
 def get_max_fd():
     _,hard_limit = getrlimit(RLIMIT_NOFILE)
