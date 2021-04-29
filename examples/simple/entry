@@ -1,13 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env python3
 
-. ../../shell/chaqum
+from chaqum.lib import *
 
-repeat -c "*/5 * * * * *" -- scan
+log.warning('HALLO')
 
-jobid=$(enqueue -g test -m 3 -- wait)
-jobid=$(enqueue -g test -m 3 -- wait)
-jobid=$(enqueue -g test -m 3 -- wait)
-jobid=$(enqueue -g test -m 3 -- wait)
+job = enqueue('test', 'abc')
+job.wait()
 
-waitjobs -t 5 -- $jobid >/dev/null
-
+interval('test', 'INTERVAL', seconds=5)
