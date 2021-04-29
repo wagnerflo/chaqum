@@ -167,6 +167,16 @@ To allow jobs to communicate with the job manager
     E&lt;LF&gt; }
 </pre>
 </div>
+<h2 class="Ss" title="Ss" id="Forcibly_terminating_jobs_and_wait_for_them_to_be_killed"><a class="permalink" href="#Forcibly_terminating_jobs_and_wait_for_them_to_be_killed">Forcibly
+  terminating jobs and wait for them to be killed</a></h2>
+<div class="Bd Bd-indent">
+<pre class="Li">
+&gt; killjobs [-t TIMEOUT] -- JOBIDENT [...]&lt;LF&gt; 
+&lt; { S&lt;LF&gt;, 
+    T JOBIDENT [...]&lt;LF&gt; 
+    E&lt;LF&gt; }
+</pre>
+</div>
 <h2 class="Ss" title="Ss" id="Queuing_a_inter_jobs_message_for_delivery"><a class="permalink" href="#Queuing_a_inter_jobs_message_for_delivery">Queuing
   a inter-jobs message for delivery</a></h2>
 <div class="Bd Bd-indent">
@@ -205,7 +215,7 @@ To allow jobs to communicate with the job manager
 Written by Florian Wagner.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">April 13, 2021</td>
+    <td class="foot-date">April 29, 2021</td>
     <td class="foot-os">Debian</td>
   </tr>
 </table>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+  <title>chaqum.lib(3)</title>
+</head>
+<body>
+<table class="head">
+  <tr>
+    <td class="head-ltitle">chaqum.lib(3)</td>
+    <td class="head-vol">Library Functions Manual</td>
+    <td class="head-rtitle">chaqum.lib(3)</td>
+  </tr>
+</table>
+<div class="manual-text">
+<h1 class="Sh" title="Sh" id="LIBRARY"><a class="permalink" href="#LIBRARY">LIBRARY</a></h1>
+<span class="Lb" title="Lb">library &#x201C;chaqum.lib&#x201D;</span> &#x2014;
+<div class="Nd" title="Nd">Python library for chaqum jobs</div>
+<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<code class="Fd" title="Fd">from chaqum.lib import *</code>
+<div class="Pp"></div>
+<code class="Fn" title="Fn">log.critical</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">*args</var>,
+  <var class="Fa" title="Fa" style="white-space: nowrap;">sep=&quot;
+  &quot;</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">log.error</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">*args</var>,
+  <var class="Fa" title="Fa" style="white-space: nowrap;">sep=&quot;
+  &quot;</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">log.warning</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">*args</var>,
+  <var class="Fa" title="Fa" style="white-space: nowrap;">sep=&quot;
+  &quot;</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">log.info</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">*args</var>,
+  <var class="Fa" title="Fa" style="white-space: nowrap;">sep=&quot;
+  &quot;</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">log.debug</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">*args</var>,
+  <var class="Fa" title="Fa" style="white-space: nowrap;">sep=&quot;
+  &quot;</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">enqueue</code>(<var class="Fa" title="Fa">script</var>,
+  <var class="Fa" title="Fa">*args</var>,
+  <var class="Fa" title="Fa">group=None</var>,
+  <var class="Fa" title="Fa">max_jobs=None</var>,
+  <var class="Fa" title="Fa">max_cpu=None</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">interval</code>(<var class="Fa" title="Fa">script</var>,
+  <var class="Fa" title="Fa">*args</var>,
+  <var class="Fa" title="Fa">seconds=0</var>,
+  <var class="Fa" title="Fa">minutes=0</var>,
+  <var class="Fa" title="Fa">hours=0</var>,
+  <var class="Fa" title="Fa">days=0</var>,
+  <var class="Fa" title="Fa">weeks=0</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">cron</code>(<var class="Fa" title="Fa">script</var>,
+  <var class="Fa" title="Fa">*args</var>,
+  <var class="Fa" title="Fa">second=&quot;*&quot;</var>,
+  <var class="Fa" title="Fa">minute=&quot;*&quot;</var>,
+  <var class="Fa" title="Fa">hour=&quot;*&quot;</var>,
+  <var class="Fa" title="Fa">day=&quot;*&quot;</var>,
+  <var class="Fa" title="Fa">month=&quot;*&quot;</var>,
+  <var class="Fa" title="Fa">day_of_week=&quot;*&quot;</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">killjobs</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">*jobs</var>,
+  <var class="Fa" title="Fa" style="white-space: nowrap;">timeout=None</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">waitrecv</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">*messages</var>,
+  <var class="Fa" title="Fa" style="white-space: nowrap;">timeout=None</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">recvmsg</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">timeout=None</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">recvjson</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">timeout=None</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">job().wait</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">timeout=None</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">job().kill</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">timeout=None</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">job().sendmsg</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">buf</var>);
+<div class="Pp"></div>
+<code class="Fn" title="Fn">job().sendjson</code>(<var class="Fa" title="Fa" style="white-space: nowrap;">obj</var>);
+<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+  ALSO</a></h1>
+<a class="Xr" title="Xr" href="chaqum.1.html">chaqum(1)</a>.
+<h1 class="Sh" title="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>
+Written by Florian Wagner.</div>
+<table class="foot">
+  <tr>
+    <td class="foot-date">April 29, 2021</td>
+    <td class="foot-os">Debian</td>
+  </tr>
+</table>
+</body>
+</html>
