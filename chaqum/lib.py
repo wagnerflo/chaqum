@@ -68,7 +68,7 @@ class job:
     group: str
 
     def wait(self, timeout=None):
-        return waitjobs(self)
+        return waitjobs(self, timeout=timeout)
 
     def sendmsg(self, buf):
         _send_command("sendmsg", "--", self.ident, len(buf), flush=False)
