@@ -173,10 +173,13 @@ class CommandTask:
             if (job := self.manager.get_job(ident)) is not None
         }
 
-        _,pending = await asyncio.wait(
-            jobs.keys(),
-            timeout=opt_to_value(opts, "-t", float),
-        )
+        if jobs:
+            _,pending = await asyncio.wait(
+                jobs.keys(),
+                timeout=opt_to_value(opts, "-t", float),
+            )
+        else:
+            pending = set()
 
         return " ".join(
             ["T" if pending else "S"] +
@@ -204,10 +207,13 @@ class CommandTask:
             if (msg := self.manager.get_message(ident)) is not None
         }
 
-        _,pending = await asyncio.wait(
-            messages.keys(),
-            timeout=opt_to_value(opts, "-t", float),
-        )
+        if messages:
+            _,pending = await asyncio.wait(
+                messages.keys(),
+                timeout=opt_to_value(opts, "-t", float),
+            )
+        else:
+            pending = set()
 
         return " ".join(
             ["T" if pending else "S"] +
