@@ -1,0 +1,51 @@
+.Dd April 29, 2021
+.Dt chaqum.lib 3
+.Os
+.Sh LIBRARY
+.Lb chaqum.lib
+.Nd Python library for chaqum jobs
+.Sh SYNOPSIS
+.Fd from chaqum.lib import *
+.Fn log.critical *args "sep=\(dq \(dq"
+.Fn log.error *args "sep=\(dq \(dq"
+.Fn log.warning *args "sep=\(dq \(dq"
+.Fn log.info *args "sep=\(dq \(dq"
+.Fn log.debug *args "sep=\(dq \(dq"
+.Fo enqueue
+.Fa script
+.Fa *args
+.Fa group=None
+.Fa max_jobs=None
+.Fa max_cpu=None
+.Fc
+.Fo interval
+.Fa script
+.Fa *args
+.Fa seconds=0
+.Fa minutes=0
+.Fa hours=0
+.Fa days=0
+.Fa weeks=0
+.Fc
+.Fo cron
+.Fa script
+.Fa *args
+.Fa second="*"
+.Fa minute="*"
+.Fa hour="*"
+.Fa day="*"
+.Fa month="*"
+.Fa day_of_week="*"
+.Fc
+.Fn killjobs *jobs timeout=None
+.Fn waitrecv *messages timeout=None
+.Fn recvmsg timeout=None
+.Fn recvjson timeout=None
+.Fn job().wait timeout=None
+.Fn job().kill timeout=None
+.Fn job().sendmsg buf
+.Fn job().sendjson obj
+.Sh SEE ALSO
+.Xr chaqum 1 .
+.Sh COPYRIGHT
+Written by Florian Wagner.

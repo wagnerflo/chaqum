@@ -1,7 +1,7 @@
 CSSURL ?= mandoc.css
 DESTDIR ?= $(CURDIR)
 
-MANPAGES = chaqum.1
+MANPAGES = chaqum.1 chaqum.lib.3
 FILES = mandoc.css
 
 all: $(patsubst %,$(DESTDIR)/%.html,$(MANPAGES))

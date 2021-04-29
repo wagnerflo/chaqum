@@ -1,4 +1,4 @@
-.Dd April 13, 2021
+.Dd April 29, 2021
 .Dt chaqum 1
 .Os
 .Sh NAME
@@ -136,6 +136,13 @@ descriptor 4.
 .Ss Waiting for jobs to finish running
 .Bd -literal -offset indent
 > waitjobs [-t TIMEOUT] -- JOBIDENT [...]<LF>
+< { S<LF>,
+    T JOBIDENT [...]<LF>
+    E<LF> }
+.Ed
+.Ss Forcibly terminating jobs and wait for them to be killed
+.Bd -literal -offset indent
+> killjobs [-t TIMEOUT] -- JOBIDENT [...]<LF>
 < { S<LF>,
     T JOBIDENT [...]<LF>
     E<LF> }

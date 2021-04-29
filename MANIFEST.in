@@ -1,1 +1,2 @@
 include man/chaqum.1
+include man/chaqum.lib.3
