@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+from chaqum.lib import *
+from time import sleep
+
+log.info("Starting worker job")
+job = enqueue("worker")
+
+log.info("Waiting 5 seconds for worker to finish")
+job.wait(timeout=5)
+
+log.info("Killing worker")
+job.kill()
+
+log.info("Waiting 10 seconds to see if worker still lives")
+sleep(10)

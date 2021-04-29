@@ -70,6 +70,9 @@ class job:
     def wait(self, timeout=None):
         return waitjobs(self, timeout=timeout)
 
+    def kill(self, timeout=None):
+        return killjobs(self, timeout=timeout)
+
     def sendmsg(self, buf):
         _send_command("sendmsg", "--", self.ident, len(buf), flush=False)
         pipe_wr.write(buf)
@@ -142,6 +145,9 @@ def _on_items(cmd, items, timeout):
 def waitjobs(*jobs, timeout=None):
     return _on_items("waitjobs", jobs, timeout)
 
+def killjobs(*jobs, timeout=None):
+    return _on_items("killjobs", jobs, timeout)
+
 def waitrecv(*messages, timeout=None):
     return _on_items("waitrecv", messages, timeout)
 
@@ -164,6 +170,7 @@ __all__ = (
     "interval",
     "cron",
     "waitjobs",
+    "killjobs",
     "waitrecv",
     "recvmsg",
     "recvjson",

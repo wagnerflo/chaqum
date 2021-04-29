@@ -23,6 +23,7 @@ class Job:
         self.ident = ident
         self.script = script
         self.args = args
+        self.task = None
         self.state = JobState.INIT
         self.log = LoggerAdapter(log, extra=dict(job=self))
 
@@ -72,6 +73,10 @@ class Job:
 
     def set_done(self):
         self.set_state(JobState.DONE)
+
+    def terminate(self):
+        if not self.task.cancelled():
+            self.task.cancel()
 
     def _state_changed(self, to):
         fut = self.loop.create_future()

@@ -165,8 +165,7 @@ class CommandTask:
 
         return f"S {job.ident}"
 
-    @commands.add("t:")
-    async def waitjobs(self, opts, *idents):
+    async def _waitjobs(self, opts, idents):
         jobs = {
             job.wait_done(): job
             for ident in idents
@@ -185,6 +184,18 @@ class CommandTask:
             ["T" if pending else "S"] +
             [jobs[fut].ident for fut in pending]
         )
+
+    @commands.add("t:")
+    async def waitjobs(self, opts, *idents):
+        return await self._waitjobs(opts, idents)
+
+    @commands.add("t:")
+    async def killjobs(self, opts, *idents):
+        for ident in idents:
+            if (job := self.manager.get_job(ident)) is not None:
+                job.terminate()
+
+        return await self._waitjobs(opts, idents)
 
     @commands.add()
     async def sendmsg(self, opts, ident, length):

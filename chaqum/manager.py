@@ -145,15 +145,15 @@ class Manager:
                 self._loop, self._stats, group
             )
 
-        # create job object and register
+        # create job object and register it
         job = self._jobs[ident] = grp[ident] = Job(
             self._loop, ident, script, *args
         )
 
-        log.debug(f"Registering job '{' '.join((script,) + args)}'.")
+        log.debug(f"Registered job '{' '.join((script,) + args)}'.")
 
         # create task
-        self._loop.create_task(self._run_job(job, grp))
+        job.task = self._loop.create_task(self._run_job(job, grp))
 
         # return job object
         return job
@@ -228,6 +228,8 @@ class Manager:
         except asyncio.CancelledError:
             if proc is not None:
                 proc.terminate()
+
+            job.log.info("Job terminated.")
 
         finally:
             # remove from job lists
