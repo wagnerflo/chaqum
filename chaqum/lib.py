@@ -1,7 +1,17 @@
 import dataclasses
 import json
 import shlex
+import sys
 
+# reconfigure sys.stdout and sys.stderr to be line buffered (in
+# non-interactive mode they are block buffered by default) to make
+# simple print() statements work
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
+# create our own handles to stderr and the command pipe so we can be
+# sure that our logging works as expected even if someone reconfigures
+# sys.stderr again
 stderr = open(2, "wb")
 pipe_wr = open(3, "wb")
 pipe_rd = open(4, "rb")
