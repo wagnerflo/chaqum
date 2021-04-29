@@ -122,12 +122,12 @@ def cron(script, *args,
         "-c", f"{second} {minute} {hour} {day} {month} {day_of_week}",
     )
 
-def waitjobs(*jobs, timeout=None):
+def _on_items(cmd, items, timeout):
     _send_command(
-        "waitjobs",
+        cmd,
         *() if timeout is None else ("-t", timeout),
         "--",
-        *(job.ident for job in jobs)
+        *(item.ident for item in items)
     )
     status,pending = _recv_response()
     if status not in ("T", "S"):
@@ -136,29 +136,14 @@ def waitjobs(*jobs, timeout=None):
         return []
     pending = pending.split(" ")
     return [
-        job for job in jobs if job.ident in pending
+        item for item in items if item.ident in pending
     ]
+
+def waitjobs(*jobs, timeout=None):
+    return _on_items("waitjobs", jobs, timeout)
 
 def waitrecv(*messages, timeout=None):
-    idents = [msg.ident for msg in messages if not msg.delivered]
-    if not idents:
-        return []
-
-    _send_command(
-        "waitrecv",
-        *() if timeout is None else ("-t", timeout),
-        "--",
-        *idents
-    )
-    status,pending = _recv_response()
-    if status not in ("S", "T"):
-        raise Exception()
-    if not pending:
-        return []
-    pending = pending.split(" ")
-    return [
-        msg for msg in messages if message.ident in pending
-    ]
+    return _on_items("waitrecv", messages, timeout)
 
 def recvmsg(timeout=None):
     _send_command(
