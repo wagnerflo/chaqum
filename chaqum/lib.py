@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import os
 import shlex
 import sys
 
@@ -65,7 +66,6 @@ class msg:
 @dataclasses.dataclass(frozen=True)
 class job:
     ident: str
-    group: str
 
     def wait(self, timeout=None):
         return waitjobs(self, timeout=timeout)
@@ -98,7 +98,7 @@ def enqueue(script, *args, group=None, max_jobs=None, max_cpu=None):
     status,ident = _recv_response()
     if status != "S":
         raise Exception()
-    return job(ident, group)
+    return job(ident)
 
 def _repeat(script, args, *opts):
     _send_command(
@@ -164,6 +164,9 @@ def recvmsg(timeout=None):
 def recvjson(timeout=None):
     return json.loads(recvmsg(timeout=timeout).decode("utf8"))
 
+if parent := os.environ.get("CHAQUM_PARENT"):
+    parent = job(parent)
+
 __all__ = (
     "log",
     "enqueue",
@@ -174,4 +177,5 @@ __all__ = (
     "waitrecv",
     "recvmsg",
     "recvjson",
+    "parent",
 )

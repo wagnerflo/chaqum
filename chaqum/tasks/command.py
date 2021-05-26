@@ -147,6 +147,7 @@ class CommandTask:
         kws = dict(
             script = script,
             args = args,
+            parent = self.job,
         )
 
         if "-g" in opts:

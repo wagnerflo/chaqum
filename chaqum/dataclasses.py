@@ -18,9 +18,10 @@ class JobState(Enum):
     DONE     = 5
 
 class Job:
-    def __init__(self, loop, ident, script, *args):
+    def __init__(self, loop, ident, parent, script, *args):
         self.loop = loop
         self.ident = ident
+        self.parent = parent
         self.script = script
         self.args = args
         self.task = None

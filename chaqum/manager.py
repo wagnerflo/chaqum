@@ -133,7 +133,7 @@ class Manager:
     def forget_message(self, msg):
         del self._messages[msg.ident]
 
-    def register_job(self, script, args=[], ident=None, group=GroupConfig()):
+    def register_job(self, script, args=[], ident=None, parent=None, group=GroupConfig()):
         self._check_script(script)
 
         if ident is None:
@@ -147,7 +147,7 @@ class Manager:
 
         # create job object and register it
         job = self._jobs[ident] = grp[ident] = Job(
-            self._loop, ident, script, *args
+            self._loop, ident, parent, script, *args
         )
 
         log.debug(f"Registered job '{' '.join((script,) + args)}'.")
@@ -184,7 +184,13 @@ class Manager:
 
             job.log.info("Starting job.")
 
-            # spawn child
+            # prepare environment variables for child
+            env = os.environ.copy()
+            env["CHAQUM_IDENT"] = job.ident
+            if job.parent is not None:
+                env["CHAQUM_PARENT"] = job.parent.ident
+
+            # spawn child process
             proc = await asyncio.create_subprocess_exec(
                 f"./{job.script}", *job.args,
                 stdin=asyncio.subprocess.DEVNULL,
@@ -193,6 +199,7 @@ class Manager:
                 close_fds=False,
                 preexec_fn=preexec_fn,
                 cwd=self._path,
+                env=env,
             )
 
             # close child pipe ends
