@@ -6,7 +6,7 @@ setup(
     description="[ˈkeɪkjuːm], the queue manager for chaotic job queues.",
     long_description=(Path(__file__).parent / "README.md").read_text(),
     long_description_content_type="text/markdown",
-    version="0.9",
+    version="0.10",
     author="Florian Wagner",
     author_email="florian@wagner-flo.net",
     url="https://github.com/wagnerflo/chaqum",
