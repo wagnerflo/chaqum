@@ -236,6 +236,7 @@ class Manager:
         except asyncio.CancelledError:
             if proc is not None:
                 proc.terminate()
+                await proc.wait()
 
             job.log.info("Job terminated.")
 
