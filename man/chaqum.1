@@ -136,15 +136,13 @@ descriptor 4.
 .Ss Waiting for jobs to finish running
 .Bd -literal -offset indent
 > waitjobs [-t TIMEOUT] -- JOBIDENT [...]<LF>
-< { S<LF>,
-    T JOBIDENT [...]<LF>
+< { S JOBIDENT {T,N,EXITCODE} [...]<LF>,
     E<LF> }
 .Ed
 .Ss Forcibly terminating jobs and wait for them to be killed
 .Bd -literal -offset indent
 > killjobs [-t TIMEOUT] -- JOBIDENT [...]<LF>
-< { S<LF>,
-    T JOBIDENT [...]<LF>
+< { S JOBIDENT {T,N,EXITCODE} [...]<LF>,
     E<LF> }
 .Ed
 .Ss Queuing a inter-jobs message for delivery
@@ -157,8 +155,7 @@ descriptor 4.
 .Ss Waiting for a message to be delivered
 .Bd -literal -offset indent
 > waitrecv [-t TIMEOUT] -- MSGIDENT [...]<LF>
-< { S<LF>,
-    T MSGIDENT [...]<LF>
+< { S MSGIDENT {T,R} [...]<LF>
     E<LF> }
 .Ed
 .Ss Receiving a message

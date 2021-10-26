@@ -58,20 +58,22 @@ class log:
 @dataclasses.dataclass(frozen=True)
 class msg:
     ident: str
-    delivered: bool = False
 
     def waitrecv(self, timeout=None):
-        return waitrecv(self)
+        (_,status), = waitrecv(self, timeout=timeout)
+        return status
 
 @dataclasses.dataclass(frozen=True)
 class job:
     ident: str
 
     def wait(self, timeout=None):
-        return waitjobs(self, timeout=timeout)
+        (_,status), = waitjobs(self, timeout=timeout)
+        return status
 
     def kill(self, timeout=None):
-        return killjobs(self, timeout=timeout)
+        (_,status), = killjobs(self, timeout=timeout)
+        return status
 
     def sendmsg(self, buf):
         _send_command("sendmsg", "--", self.ident, len(buf), flush=False)
@@ -85,6 +87,12 @@ class job:
 
     def sendjson(self, obj):
         return self.sendmsg(json.dumps(obj).encode("utf-8"))
+
+@dataclasses.dataclass(frozen=True)
+class job_status:
+    timeout: bool
+    done: bool
+    exitcode: int
 
 def enqueue(script, *args, group=None, max_jobs=None, max_cpu=None):
     _send_command(
@@ -132,24 +140,36 @@ def _on_items(cmd, items, timeout):
         "--",
         *(item.ident for item in items)
     )
-    status,pending = _recv_response()
-    if status not in ("T", "S"):
+    status,results = _recv_response()
+    if status != "S":
         raise Exception()
-    if not pending:
-        return []
-    pending = pending.split(" ")
-    return [
-        item for item in items if item.ident in pending
-    ]
+    results = iter(results.split(" "))
+    results = dict(zip(results, results))
+    for item in items:
+        yield item,results.get(item.ident)
+
+def _do_jobs(func, jobs, timeout):
+    for job,result in _on_items(func, jobs, timeout):
+        if result is None:
+            yield job,None
+        elif result == "T":
+            yield job,job_status(True, None, None)
+        elif result == "N":
+            yield job,job_status(False, True, None)
+        else:
+            yield job,job_status(False, True, int(result))
 
 def waitjobs(*jobs, timeout=None):
-    return _on_items("waitjobs", jobs, timeout)
+    return list(_do_jobs("waitjobs", jobs, timeout))
 
 def killjobs(*jobs, timeout=None):
-    return _on_items("killjobs", jobs, timeout)
+    return list(_do_jobs("killjobs", jobs, timeout))
 
 def waitrecv(*messages, timeout=None):
-    return _on_items("waitrecv", messages, timeout)
+    return [
+        (msg,result == "R")
+        for msg,result in _on_items("waitrecv", messages, timeout)
+    ]
 
 def recvmsg(timeout=None):
     _send_command(

@@ -166,24 +166,28 @@ class CommandTask:
 
         return f"S {job.ident}"
 
-    async def _waitjobs(self, opts, idents):
-        jobs = {
-            job.wait_done(): job
-            for ident in idents
-            if (job := self.manager.get_job(ident)) is not None
-        }
+    async def _waitfutures(self, futures, timeout):
+        if not futures:
+            return (),()
 
-        if jobs:
-            _,pending = await asyncio.wait(
-                jobs.keys(),
-                timeout=opt_to_value(opts, "-t", float),
-            )
-        else:
-            pending = set()
+        return tuple(
+            tuple(futures[fut] for fut in lst)
+            for lst in await asyncio.wait(futures.keys(), timeout=timeout)
+        )
+
+    async def _waitjobs(self, opts, idents):
+        done,pending = await self._waitfutures(
+            { job.wait_done(): job
+              for ident in idents
+              if (job := self.manager.get_job(ident)) is not None },
+            opt_to_value(opts, "-t", float),
+        )
 
         return " ".join(
-            ["T" if pending else "S"] +
-            [jobs[fut].ident for fut in pending]
+            ["S"] +
+            [f"{j.ident} T" for j in pending] +
+            [f"{j.ident} N" if j.exitcode is None else f"{j.ident} {j.exitcode}"
+             for j in done]
         )
 
     @commands.add("t:")
@@ -213,23 +217,17 @@ class CommandTask:
 
     @commands.add("t:")
     async def waitrecv(self, opts, *idents):
-        messages = {
-            msg.delivered: msg
-            for ident in idents
-            if (msg := self.manager.get_message(ident)) is not None
-        }
-
-        if messages:
-            _,pending = await asyncio.wait(
-                messages.keys(),
-                timeout=opt_to_value(opts, "-t", float),
-            )
-        else:
-            pending = set()
+        done,pending = await self._waitfutures(
+            { msg.delivered: msg
+              for ident in idents
+              if (msg := self.manager.get_message(ident)) is not None },
+            opt_to_value(opts, "-t", float),
+        )
 
         return " ".join(
-            ["T" if pending else "S"] +
-            [messages[fut].ident for fut in pending]
+            ["S"] +
+            [f"{m.ident} T" for m in pending] +
+            [f"{m.ident} R" for m in done]
         )
 
     @commands.add("t:")
