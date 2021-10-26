@@ -245,6 +245,10 @@ class Manager:
             del self._jobs[job.ident]
             del self._groups[grp.ident][job.ident]
 
+            # take note of exit code or signal
+            if proc is not None:
+                job.exitcode = proc.returncode
+
             # signal end of job
             job.set_done()
 

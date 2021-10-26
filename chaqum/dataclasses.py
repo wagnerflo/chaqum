@@ -24,6 +24,7 @@ class Job:
         self.parent = parent
         self.script = script
         self.args = args
+        self.exitcode = None
         self.task = None
         self.state = JobState.INIT
         self.log = LoggerAdapter(log, extra=dict(job=self))
