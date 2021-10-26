@@ -162,8 +162,7 @@ To allow jobs to communicate with the job manager
 <div class="Bd Bd-indent">
 <pre class="Li">
 &gt; waitjobs [-t TIMEOUT] -- JOBIDENT [...]&lt;LF&gt; 
-&lt; { S&lt;LF&gt;, 
-    T JOBIDENT [...]&lt;LF&gt; 
+&lt; { S JOBIDENT {T,N,EXITCODE} [...]&lt;LF&gt;, 
     E&lt;LF&gt; }
 </pre>
 </div>
@@ -172,8 +171,7 @@ To allow jobs to communicate with the job manager
 <div class="Bd Bd-indent">
 <pre class="Li">
 &gt; killjobs [-t TIMEOUT] -- JOBIDENT [...]&lt;LF&gt; 
-&lt; { S&lt;LF&gt;, 
-    T JOBIDENT [...]&lt;LF&gt; 
+&lt; { S JOBIDENT {T,N,EXITCODE} [...]&lt;LF&gt;, 
     E&lt;LF&gt; }
 </pre>
 </div>
@@ -192,8 +190,7 @@ To allow jobs to communicate with the job manager
 <div class="Bd Bd-indent">
 <pre class="Li">
 &gt; waitrecv [-t TIMEOUT] -- MSGIDENT [...]&lt;LF&gt; 
-&lt; { S&lt;LF&gt;, 
-    T MSGIDENT [...]&lt;LF&gt; 
+&lt; { S MSGIDENT {T,R} [...]&lt;LF&gt; 
     E&lt;LF&gt; }
 </pre>
 </div>
