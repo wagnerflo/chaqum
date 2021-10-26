@@ -192,7 +192,8 @@ class Manager:
 
             # spawn child process
             proc = await asyncio.create_subprocess_exec(
-                f"./{job.script}", *job.args,
+                str(self._path / job.script),
+                *job.args,
                 stdin=asyncio.subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
