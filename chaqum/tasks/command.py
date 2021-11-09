@@ -142,12 +142,13 @@ class CommandTask:
 
         return "S"
 
-    @commands.add("g:m:c:")
+    @commands.add("Fg:m:c:")
     async def enqueue(self, opts, script, *args):
         kws = dict(
             script = script,
             args = args,
             parent = self.job,
+            forget = "-F" in opts,
         )
 
         if "-g" in opts:
@@ -182,6 +183,9 @@ class CommandTask:
               if (job := self.manager.get_job(ident)) is not None },
             opt_to_value(opts, "-t", float),
         )
+
+        for job in done:
+            self.manager.forget_job(job)
 
         return " ".join(
             ["S"] +

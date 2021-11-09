@@ -87,6 +87,7 @@ class Manager:
             self._entry_script_name,
             args = entry_args,
             ident = self._entry_script_name,
+            forget = True,
         )
 
         await entry.wait_done()
@@ -133,7 +134,8 @@ class Manager:
     def forget_message(self, msg):
         del self._messages[msg.ident]
 
-    def register_job(self, script, args=[], ident=None, parent=None, group=GroupConfig()):
+    def register_job(self, script, args=[], ident=None, parent=None,
+                     forget=False, group=GroupConfig()):
         self._check_script(script)
 
         if ident is None:
@@ -153,7 +155,7 @@ class Manager:
         log.debug(f"Registered job '{' '.join((script,) + args)}'.")
 
         # create task
-        job.task = self._loop.create_task(self._run_job(job, grp))
+        job.task = self._loop.create_task(self._run_job(job, grp, forget))
 
         # return job object
         return job
@@ -161,7 +163,13 @@ class Manager:
     def get_job(self, ident):
         return self._jobs.get(ident)
 
-    async def _run_job(self, job, grp):
+    def forget_job(self, job):
+        try:
+            del self._jobs[job.ident]
+        except:
+            pass
+
+    async def _run_job(self, job, grp, forget):
         proc = None
 
         try:
@@ -241,9 +249,12 @@ class Manager:
             job.log.info("Job terminated.")
 
         finally:
-            # remove from job lists
-            del self._jobs[job.ident]
+            # remove from group list
             del self._groups[grp.ident][job.ident]
+
+            # remove from job list if user won't guarantee that job'll be awaited
+            if forget:
+                self.forget_job(job)
 
             # take note of exit code or signal
             if proc is not None:

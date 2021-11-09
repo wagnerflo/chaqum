@@ -3,7 +3,7 @@
 from chaqum.lib import *
 
 log.info('Starting recv job')
-job = enqueue('recv')
+job = enqueue('recv', forget=True)
 
 log.info('Sending message')
 msg = job.sendjson({'hello': 'wörld', 'newline': '\n'})

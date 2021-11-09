@@ -123,7 +123,7 @@ file descriptor 3, job reads managers reply by reading from file
 descriptor 4.
 .Ss Adding new jobs to be started
 .Bd -literal -offset indent
-> enqueue [-g GROUP] [-m MAXPROC] [-c MAXCPU] -- SCRIPT [ARGUMENT ...]<LF>
+> enqueue [-F] [-g GROUP] [-m MAXPROC] [-c MAXCPU] -- SCRIPT [ARGUMENT ...]<LF>
 < { S JOBIDENT<LF>,
     E<LF> }
 .Ed

@@ -82,7 +82,10 @@ class Job:
 
     def _state_changed(self, to):
         fut = self.loop.create_future()
-        self._state_waiters[to].append(fut)
+        if to == self.state:
+            fut.set_result(True)
+        else:
+            self._state_waiters[to].append(fut)
         return fut
 
     def wait_running(self):

@@ -68,12 +68,16 @@ class job:
     ident: str
 
     def wait(self, timeout=None):
-        (_,status), = waitjobs(self, timeout=timeout)
-        return status
+        if res := waitjobs(self, timeout=timeout):
+            return res[0][1]
+        else:
+            return job_status(False, True, None)
 
     def kill(self, timeout=None):
-        (_,status), = killjobs(self, timeout=timeout)
-        return status
+        if res := killjobs(self, timeout=timeout):
+            return res[0][1]
+        else:
+            return job_status(False, True, None)
 
     def sendmsg(self, buf):
         _send_command("sendmsg", "--", self.ident, len(buf), flush=False)
@@ -94,12 +98,13 @@ class job_status:
     done: bool
     exitcode: int
 
-def enqueue(script, *args, group=None, max_jobs=None, max_cpu=None):
+def enqueue(script, *args, group=None, max_jobs=None, max_cpu=None, forget=False):
     _send_command(
         "enqueue",
         *() if group    is None else ("-g", group),
         *() if max_jobs is None else ("-m", max_jobs),
         *() if max_cpu  is None else ("-c", max_cpu),
+        *() if not forget       else ("-F",),
         "--",
         script, *args
     )
@@ -143,6 +148,8 @@ def _on_items(cmd, items, timeout):
     status,results = _recv_response()
     if status != "S":
         raise Exception()
+    if results is None:
+        return
     results = iter(results.split(" "))
     results = dict(zip(results, results))
     for item in items:
