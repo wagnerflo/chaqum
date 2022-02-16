@@ -17,6 +17,11 @@ stderr = open(2, "wb")
 pipe_wr = open(3, "wb")
 pipe_rd = open(4, "rb")
 
+# hook current working directory into PYTHONPATH to make handling of
+# imports across multi-directory job trees easier
+if (cwd := os.getcwd()) not in sys.path:
+    sys.path.insert(1, cwd)
+
 def _send_log(lvl, sep, args):
     stderr.write(lvl)
     stderr.write(b"\x1f")
