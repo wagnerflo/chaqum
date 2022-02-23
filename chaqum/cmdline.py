@@ -92,6 +92,7 @@ def main():
 
         appname = None
         facility = None
+        socket_path = None
 
         if args.log.startswith("syslog"):
             args.log,_,appname = args.log.partition(":")
