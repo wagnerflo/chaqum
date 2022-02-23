@@ -67,11 +67,10 @@ The options are as follows:
     <code class="Fl" title="Fl">--log</code>
     <var class="Ar" title="Ar">LOG</var></dt>
   <dd>Configure logging. Can be one of
-      <code class="Dv" title="Dv">'console'</code> or
-      <code class="Dv" title="Dv">'syslog[:[APPNAME][:FACILITY]]'</code> to
-      install sane defaults for logging to stderr or local Syslog respectivly.
-      Otherwise the setting will be interpreted as the path to a JSON file
-      containing the
+      <code class="Dv" title="Dv">'console'</code> for logging to stderr or
+      <code class="Dv" title="Dv">'syslog[:[APPNAME][:FACILITY][:SOCKET_PATH]]'</code>
+      for sane defaults for logging to local Syslog. Otherwise the will be
+      interpreted as the path to a JSON file containing the
       <code class="Fn" title="Fn">logging.config.dictConfig</code>() format.
       Defaults to <code class="Dv" title="Dv">'syslog'</code> if running as a
       daemon <code class="Dv" title="Dv">'console'</code> otherwise.</dd>
@@ -212,7 +211,7 @@ To allow jobs to communicate with the job manager
 Written by Florian Wagner.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">April 29, 2021</td>
+    <td class="foot-date">February 23, 2022</td>
     <td class="foot-os">Debian</td>
   </tr>
 </table>
