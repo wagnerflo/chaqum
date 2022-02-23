@@ -1,4 +1,4 @@
-.Dd April 29, 2021
+.Dd February 23, 2022
 .Dt chaqum 1
 .Os
 .Sh NAME
@@ -39,11 +39,10 @@ Show a help message and exit.
 .It Fl l , \-log Ar LOG
 Configure logging. Can be one of
 .Dv 'console'
-or
-.Dv 'syslog[:[APPNAME][:FACILITY]]'
-to install sane defaults for logging to stderr or local Syslog
-respectivly. Otherwise the setting will be interpreted as the path to
-a JSON file containing the
+for logging to stderr or
+.Dv 'syslog[:[APPNAME][:FACILITY][:SOCKET_PATH]]'
+for sane defaults for logging to local Syslog. Otherwise the will be
+interpreted as the path to a JSON file containing the
 .Fn logging.config.dictConfig
 format. Defaults to
 .Dv 'syslog'

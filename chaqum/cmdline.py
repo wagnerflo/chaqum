@@ -33,13 +33,12 @@ def main():
         "-l", "--log",
         default=None,
         help=(
-            "Configure logging. Can be one of 'console' or "
-            "'syslog[:[APPNAME][:FACILITY]]' to install sane defaults "
-            "for logging to stderr or local Syslog respectivly. "
-            "Otherwise the setting will be interpreted as the path to "
-            "a JSON file containing the logging.config.dictConfig "
-            "format. Defaults to 'syslog' if running as a daemon, "
-            "'console' otherwise."
+            "Configure logging. Can be one of 'console' for logging to "
+            "stderr or 'syslog[:[APPNAME][:FACILITY][:SOCKET_PATH]]' "
+            "for sane defaults for logging to local Syslog. Otherwise "
+            "the setting will be interpreted as the path to a JSON file "
+            "containing the logging.config.dictConfig format. Defaults "
+            "to 'syslog' if running as a daemon, 'console' otherwise."
         )
     )
     parser.add_argument(
@@ -97,6 +96,7 @@ def main():
         if args.log.startswith("syslog"):
             args.log,_,appname = args.log.partition(":")
             appname,_,facility = appname.partition(":")
+            facility,_,socket_path = facility.partition(":")
 
         if args.log in ("console", "syslog"):
             PACKAGE_NAME,_,_ = __name__.rpartition(".")
@@ -125,6 +125,7 @@ def main():
             syslog = dict(
                 appname = appname or prog,
                 facility = facility or "daemon",
+                socket_path = socket_path or "/dev/log",
             ),
         )
 

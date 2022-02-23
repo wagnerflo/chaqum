@@ -16,12 +16,14 @@
   "handlers": {
     "default":{
       "class": "noblklog.AsyncSyslogHandler",
+      "socket_path": "cfg://syslog.socket_path",
       "appname": "cfg://syslog.appname",
       "facility": "cfg://syslog.facility",
       "formatter": "default"
     },
     "job":{
       "class": "noblklog.AsyncSyslogHandler",
+      "socket_path": "cfg://syslog.socket_path",
       "appname": "cfg://syslog.appname",
       "facility": "cfg://syslog.facility",
       "formatter": "job"
